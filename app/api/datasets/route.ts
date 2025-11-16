@@ -7,6 +7,10 @@ import { ensureUploadDir, UPLOAD_DIR } from '@/lib/upload'
 import path from 'path'
 import fs from 'fs/promises'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // GET /api/datasets - List datasets with filtering
 export async function GET(req: NextRequest) {
   try {

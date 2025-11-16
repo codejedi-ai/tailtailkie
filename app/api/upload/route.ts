@@ -4,6 +4,10 @@ import { writeFile } from 'fs/promises'
 import { join } from 'path'
 import { ensureUploadDir, UPLOAD_DIR, isAllowedFormat } from '@/lib/upload'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // POST /api/upload - Upload tensor files
 export async function POST(req: NextRequest) {
   try {

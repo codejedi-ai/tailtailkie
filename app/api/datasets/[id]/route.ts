@@ -5,6 +5,10 @@ import { UpdateDatasetSchema } from '@/lib/types'
 import fs from 'fs/promises'
 import path from 'path'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // GET /api/datasets/[id] - Get a single dataset
 export async function GET(
   req: NextRequest,
