@@ -16,7 +16,8 @@
       "Bash(if [ -f nul ])",
       "Bash(then rm -f nul)",
       "Bash(fi)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pnpm dev)"
     ],
     "deny": [],
     "ask": []
