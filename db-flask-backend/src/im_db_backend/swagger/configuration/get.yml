@@ -1,9 +1,0 @@
-Configuration GET endpoint retrieves configuration related parameters
----
-tags:
-- configuration
-responses:
-  200:
-    description: User credentials and corresponding configuration
-    schema:
-      $ref: "#/definitions/ConfigurationGETResponse"

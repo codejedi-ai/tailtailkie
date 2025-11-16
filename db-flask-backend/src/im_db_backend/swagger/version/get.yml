@@ -1,9 +1,0 @@
-Version GET endpoint retrieves current build version
----
-tags:
-  - version
-responses:
-  200:
-    description: Current build version
-    schema:
-      $ref: "#/definitions/BuildVersionGETResponse"
