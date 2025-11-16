@@ -5,7 +5,10 @@ import { getOrCreateUser } from '@/lib/auth'
 import { readFile } from 'fs/promises'
 import path from 'path'
 import archiver from 'archiver'
-import { Readable } from 'stream'
+
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 // GET /api/datasets/[id]/download - Download dataset as zip
 export async function GET(
