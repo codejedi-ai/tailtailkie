@@ -77,7 +77,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-16 relative">
           <div className="text-center max-w-4xl mx-auto mb-12">
             <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent animate-pulse">
-              TensorSet
+              TensorStore
             </h1>
             <p className="text-lg text-cyber-light/60 mb-2">Kaggle for Tensors</p>
             <p className="text-2xl font-bold text-cyber-pink mb-4">
@@ -90,7 +90,7 @@ export default function HomePage() {
               As brain-inspired AI models, embeddings, and vector representations dominate modern computing, we're witnessing the shift from
               <span className="text-cyber-blue font-semibold"> Object-Oriented Programming</span> to
               <span className="text-cyber-purple font-semibold"> Tensor-Oriented Programming</span>.
-              TensorSet is the foundation of this new paradigm - where everything is vectors, and data is already ML-ready.
+              TensorStore is the foundation of this new paradigm - where everything is vectors, and data is already ML-ready.
             </p>
 
             <div className="flex gap-4 justify-center">
@@ -245,12 +245,12 @@ export default function HomePage() {
               </div>
               <p className="text-cyber-light/70 text-sm">
                 Every piece of data - text, images, audio, video - is now represented as vectors.
-                Brain-inspired AI models have made tensor representation the default. TensorSet embraces this reality.
+                Brain-inspired AI models have made tensor representation the default. TensorStore embraces this reality.
               </p>
             </div>
           </div>
 
-          <h2 className="text-3xl font-bold text-center text-cyber-light mb-12">Why TensorSet?</h2>
+          <h2 className="text-3xl font-bold text-center text-cyber-light mb-12">Why TensorStore?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="text-center">

@@ -8,7 +8,7 @@ import { LayoutWrapper } from '@/components/LayoutWrapper'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'TensorSet - Pure ML Dataset Platform',
+  title: 'TensorStore - Pure ML Dataset Platform',
   description: 'Upload and share structured tensor datasets for machine learning. The home of Kaggle for Tensors.',
 }
 

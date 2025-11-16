@@ -49,7 +49,7 @@ export function Sidebar() {
           <Link href="/" className="flex items-center gap-2">
             <Database className="w-6 h-6 text-cyber-blue" />
             <span className="font-bold bg-gradient-to-r from-cyber-blue to-cyber-purple bg-clip-text text-transparent">
-              TensorSet
+              TensorStore
             </span>
           </Link>
         )}

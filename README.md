@@ -1,4 +1,4 @@
-# TensorSet
+# TensorStore
 
 <div align="center">
 
@@ -17,9 +17,9 @@
 
 ---
 
-## 🎯 What is TensorSet?
+## 🎯 What is TensorStore?
 
-**TensorSet** (Kaggle for Tensors) is more than a dataset platform - it's the foundation of a new programming paradigm.
+**TensorStore** (Kaggle for Tensors) is more than a dataset platform - it's the foundation of a new programming paradigm.
 
 ### 🚀 The Next Evolution: Tensor-Oriented Programming
 
@@ -36,9 +36,9 @@ Object-Oriented Programming → Tensor-Oriented Programming
 - **Vector databases** - The new standard for data storage and retrieval
 - **Embeddings as APIs** - Neural networks consume and produce tensors, not strings
 
-TensorSet is purpose-built for this tensor-first world. Unlike traditional platforms dealing with CSV files and unstructured data, **TensorSet only accepts pure tensor formats** that are ready for neural networks.
+TensorStore is purpose-built for this tensor-first world. Unlike traditional platforms dealing with CSV files and unstructured data, **TensorStore only accepts pure tensor formats** that are ready for neural networks.
 
-### Why TensorSet?
+### Why TensorStore?
 
 - **No Data Engineering Required** - Datasets are already in tensor format (.pt, .npy, .safetensors, .h5)
 - **Semantic Dimension Annotations** - Each dimension is labeled (batch, channels, height, width, embeddings)
