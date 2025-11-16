@@ -138,7 +138,7 @@ export default function HomePage() {
                 </Link>
               ) : (
                 <Link href="/sign-up">
-                  <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg">
+                  <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg hover:animate-pulse">
                     Get Started
                   </Button>
                 </Link>
