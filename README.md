@@ -70,10 +70,11 @@ Every dimension in every tensor is annotated with:
 ### 🔹 Modern Stack
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe development
+- **MongoDB** - Main database for metadata and user data
+- **Milvus** - Vector store for tensor embeddings and similarity search (planned)
 - **Prisma ORM** - Type-safe database queries
 - **Clerk Auth** - User authentication and management
 - **Tailwind CSS** - Cyberpunk-themed UI
-- **SQLite** - Development database (production-ready for PostgreSQL/MySQL)
 
 ## 🚀 Quick Start
 
@@ -95,8 +96,14 @@ pnpm install
 cp .env.example .env
 # Edit .env with your Clerk keys
 
-# Initialize database
+# Set up MongoDB (if running locally)
+# Make sure MongoDB is running on localhost:27017
+# Or use MongoDB Atlas and update DATABASE_URL in .env
+
+# Initialize database schema
 npx prisma db push
+
+# Milvus integration is planned but not yet implemented
 
 # Create uploads directory
 mkdir uploads
@@ -110,8 +117,17 @@ Visit http://localhost:3000
 ### Environment Variables
 
 ```env
-# Database
-DATABASE_URL="file:./dev.db"
+# MongoDB Database
+DATABASE_URL="mongodb://localhost:27017/tensorstore"
+# Or for MongoDB Atlas:
+# DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/tensorstore?retryWrites=true&w=majority"
+
+# Milvus Vector Store (not yet implemented)
+# MILVUS_HOST="localhost"
+# MILVUS_PORT="19530"
+# Or for Milvus Cloud:
+# MILVUS_URI="https://your-instance.milvus.io"
+# MILVUS_TOKEN="your-token"
 
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -188,6 +204,21 @@ The metadata file includes:
 
 ## 🏗️ Architecture
 
+### Data Storage Architecture
+
+TensorStore uses MongoDB as the primary database, with plans for Milvus integration:
+
+- **MongoDB** - Stores all metadata, user data, dataset information, and tensor file references
+- **Milvus** (planned) - Vector database for storing tensor embeddings, enabling similarity search and semantic retrieval
+
+Current architecture:
+- Fast metadata queries via MongoDB
+- Scalable storage for large tensor datasets
+
+Planned enhancements:
+- Efficient vector similarity search via Milvus
+- Semantic search capabilities for finding similar tensors
+
 ### Project Structure
 
 ```
@@ -207,29 +238,31 @@ app/
 └── page.tsx               # Homepage
 
 lib/
-├── prisma.ts              # Database client
+├── prisma.ts              # MongoDB client (via Prisma)
+├── mongodb.ts             # Direct MongoDB client
+├── auth.ts                # User authentication helpers
 ├── types.ts               # Zod schemas
 ├── upload.ts              # File utilities
 └── utils.ts               # Helper functions
 
 prisma/
-└── schema.prisma          # Database schema
+└── schema.prisma          # MongoDB schema
 ```
 
-### Database Schema
+### Database Schema (MongoDB)
 
 ```prisma
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   clerkId   String   @unique
   email     String   @unique
-  username  String?
+  username  String?  @unique
   datasets  Dataset[]
   downloads Download[]
 }
 
 model Dataset {
-  id            String   @id @default(cuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   description   String?
   fileFormat    String
@@ -242,7 +275,7 @@ model Dataset {
 }
 
 model Tensor {
-  id         String      @id @default(cuid())
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
   fileName   String
   shape      String      // JSON: [128, 256, 3]
   dtype      String      // "float32", "int64"
@@ -258,6 +291,8 @@ model Dimension {
   tensor      Tensor      @relation(...)
 }
 ```
+
+**Note:** Currently, all data is stored in MongoDB. Milvus integration for vector similarity search is planned for future releases.
 
 ## 🔌 API Reference
 
@@ -372,7 +407,9 @@ pnpm lint             # Run ESLint
 |----------|-----------|
 | Framework | Next.js 14.2 |
 | Language | TypeScript 5.9 |
-| Database | Prisma + SQLite |
+| Main Database | MongoDB |
+| Vector Store | Milvus (planned) |
+| ORM | Prisma |
 | Auth | Clerk |
 | Styling | Tailwind CSS |
 | UI Components | Radix UI |
@@ -414,13 +451,19 @@ vercel
 # Update Clerk webhook URL to production domain
 ```
 
-### Database Migration
+### Database Setup
 
-For production, migrate from SQLite to PostgreSQL:
+**MongoDB:**
+- For local development: Install MongoDB and run locally
+- For production: Use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (recommended)
+- Update `DATABASE_URL` in `.env` with your connection string
+- Run `npx prisma db push` to sync schema
 
-1. Update `DATABASE_URL` in `.env`
-2. Change `provider` in `schema.prisma` to `postgresql`
-3. Run `npx prisma db push`
+**Milvus Vector Store (Planned):**
+- Milvus integration is planned for future releases
+- Will enable vector similarity search for tensor embeddings
+- For local development: Use [Docker](https://milvus.io/docs/install_standalone-docker.md) or [Milvus Lite](https://milvus.io/docs/install_standalone-docker.md)
+- For production: Use [Milvus Cloud](https://zilliz.com/cloud) (recommended)
 
 ### File Storage
 
