@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateUser } from '@/lib/auth'
 import { readFile } from 'fs/promises'
 import path from 'path'
 import archiver from 'archiver'
@@ -35,9 +36,7 @@ export async function GET(
 
     // Record download if user is authenticated
     if (userId) {
-      const user = await prisma.user.findUnique({
-        where: { clerkId: userId },
-      })
+      const user = await getOrCreateUser()
 
       if (user) {
         await prisma.download.create({

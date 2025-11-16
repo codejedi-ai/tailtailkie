@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { UserButton } from '@clerk/nextjs'
+import { UserButton, useUser } from '@clerk/nextjs'
 import {
   Home,
   Database,
@@ -35,6 +35,7 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const { collapsed, setCollapsed } = useSidebar()
   const pathname = usePathname()
+  const { user } = useUser()
 
   return (
     <div
@@ -101,10 +102,10 @@ export function Sidebar() {
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-cyber-light truncate">
-                My Account
+                {user?.username || user?.fullName || 'User'}
               </p>
-              <p className="text-xs text-cyber-light/50">
-                Settings
+              <p className="text-xs text-cyber-light/50 truncate">
+                {user?.primaryEmailAddress?.emailAddress || ''}
               </p>
             </div>
           )}
