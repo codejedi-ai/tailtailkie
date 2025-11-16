@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { UpdateDatasetSchema } from '@/lib/types'
-import fs from 'fs/promises'
-import path from 'path'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
@@ -163,15 +161,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Delete tensor files
-    for (const tensor of existingDataset.tensors) {
-      try {
-        const filePath = path.join(process.cwd(), tensor.filePath)
-        await fs.unlink(filePath)
-      } catch (error) {
-        console.error(`Failed to delete file: ${tensor.filePath}`, error)
-      }
-    }
+    // NOTE: File deletion is not needed since files are not stored locally.
+    // When Milvus is implemented, file deletion will be handled by Milvus.
 
     // Delete dataset (cascades to tensors and dimensions)
     await prisma.dataset.delete({

@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateUser } from '@/lib/auth'
-import { readFile } from 'fs/promises'
-import path from 'path'
-import archiver from 'archiver'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
@@ -19,12 +16,16 @@ export async function GET(
     const { userId } = await auth()
     const { id } = await params
 
-    // Get dataset with tensors
+    // Get dataset with tensors and dimensions
     const dataset = await prisma.dataset.findUnique({
       where: { id },
       include: {
         user: true,
-        tensors: true,
+        tensors: {
+          include: {
+            dimensions: true,
+          },
+        },
       },
     })
 
@@ -61,26 +62,21 @@ export async function GET(
       }
     }
 
-    // If single file, return directly
-    if (dataset.tensors.length === 1) {
-      const tensor = dataset.tensors[0]
-      const filePath = path.join(process.cwd(), tensor.filePath)
-      const fileBuffer = await readFile(filePath)
-
-      return new NextResponse(new Uint8Array(fileBuffer), {
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Content-Disposition': `attachment; filename="${tensor.fileName}"`,
+    // Check if Milvus is configured
+    const milvusHost = process.env.MILVUS_HOST || process.env.MILVUS_URI
+    if (!milvusHost) {
+      return NextResponse.json(
+        {
+          error: 'Milvus vector store is not configured. Please connect and implement Milvus before downloading files.',
+          message: 'File download requires Milvus integration. Please configure MILVUS_HOST or MILVUS_URI environment variables and implement the Milvus connection.',
         },
-      })
+        { status: 503 } // 503 Service Unavailable
+      )
     }
 
-    // Multiple files - create zip archive
-    const archive = archiver('zip', {
-      zlib: { level: 9 },
-    })
-
-    // Add metadata file
+    // NOTE: File download functionality requires Milvus implementation.
+    // Files are not stored locally - implementation will use Milvus vector store.
+    // For now, return metadata only.
     const metadata = {
       name: dataset.name,
       description: dataset.description,
@@ -89,44 +85,22 @@ export async function GET(
         fileName: t.fileName,
         shape: JSON.parse(t.shape),
         dtype: t.dtype,
+        dimensions: t.dimensions.map((d) => ({
+          index: d.index,
+          size: d.size,
+          name: d.name,
+          description: d.description,
+        })),
       })),
       created: dataset.createdAt,
+      message: 'File download requires Milvus implementation to be completed. Milvus connection is configured but the download handler needs implementation.',
     }
 
-    archive.append(JSON.stringify(metadata, null, 2), { name: 'metadata.json' })
-
-    // Add all tensor files
-    for (const tensor of dataset.tensors) {
-      const filePath = path.join(process.cwd(), tensor.filePath)
-      const fileBuffer = await readFile(filePath)
-      archive.append(fileBuffer, { name: tensor.fileName })
-    }
-
-    await archive.finalize()
-
-    // Convert archive stream to NextResponse
-    const chunks: Uint8Array[] = []
-
-    return new Promise<NextResponse>((resolve, reject) => {
-      archive.on('data', (chunk: any) => chunks.push(new Uint8Array(chunk)))
-      archive.on('end', () => {
-        const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0)
-        const result = new Uint8Array(totalLength)
-        let offset = 0
-        for (const chunk of chunks) {
-          result.set(chunk, offset)
-          offset += chunk.length
-        }
-        resolve(
-          new NextResponse(result, {
-            headers: {
-              'Content-Type': 'application/zip',
-              'Content-Disposition': `attachment; filename="${dataset.name.replace(/[^a-z0-9]/gi, '_')}.zip"`,
-            },
-          })
-        )
-      })
-      archive.on('error', reject)
+    return NextResponse.json(metadata, {
+      status: 501, // 501 Not Implemented
+      headers: {
+        'Content-Type': 'application/json',
+      },
     })
   } catch (error) {
     console.error('Error downloading dataset:', error)

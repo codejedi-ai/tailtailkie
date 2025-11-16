@@ -3,9 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateUser } from '@/lib/auth'
 import { CreateDatasetSchema } from '@/lib/types'
-import { ensureUploadDir, UPLOAD_DIR } from '@/lib/upload'
 import path from 'path'
-import fs from 'fs/promises'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
@@ -123,24 +121,30 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const validatedData = CreateDatasetSchema.parse(body)
 
-    await ensureUploadDir()
+    // Check if Milvus is configured
+    const milvusHost = process.env.MILVUS_HOST || process.env.MILVUS_URI
+    if (!milvusHost) {
+      return NextResponse.json(
+        {
+          error: 'Milvus vector store is not configured. Please connect and implement Milvus before creating datasets with files.',
+          message: 'Dataset creation with files requires Milvus integration. Please configure MILVUS_HOST or MILVUS_URI environment variables.',
+        },
+        { status: 503 } // 503 Service Unavailable
+      )
+    }
 
-    // Calculate total size from all tensors
+    // NOTE: File storage requires Milvus implementation. Planned implementation will use Milvus.
+    // For now, we'll create dataset metadata without file validation.
+    // Calculate total size from tensor metadata (estimated)
     let totalSize = 0
-    const tensorFiles: string[] = []
-
     for (const tensor of validatedData.tensors) {
-      const filePath = path.join(UPLOAD_DIR, tensor.fileName)
-      try {
-        const stats = await fs.stat(filePath)
-        totalSize += stats.size
-        tensorFiles.push(tensor.fileName)
-      } catch (error) {
-        return NextResponse.json(
-          { error: `Tensor file not found: ${tensor.fileName}` },
-          { status: 400 }
-        )
-      }
+      // Estimate size based on shape and dtype (rough approximation)
+      const shape = tensor.shape
+      const elementCount = shape.reduce((acc: number, dim: number) => acc * dim, 1)
+      const bytesPerElement = tensor.dtype.includes('float64') || tensor.dtype.includes('int64') ? 8 :
+                              tensor.dtype.includes('float32') || tensor.dtype.includes('int32') ? 4 :
+                              tensor.dtype.includes('float16') || tensor.dtype.includes('int16') ? 2 : 1
+      totalSize += elementCount * bytesPerElement
     }
 
     // Determine file format from first tensor
@@ -159,21 +163,30 @@ export async function POST(req: NextRequest) {
         tags: validatedData.tags ? JSON.stringify(validatedData.tags) : null,
         isPublic: validatedData.isPublic,
         tensors: {
-          create: validatedData.tensors.map((tensor) => ({
-            fileName: tensor.fileName,
-            filePath: path.relative(process.cwd(), path.join(UPLOAD_DIR, tensor.fileName)),
-            fileSize: 0, // Will be updated
-            shape: JSON.stringify(tensor.shape),
-            dtype: tensor.dtype,
-            dimensions: {
-              create: tensor.dimensions.map((dim) => ({
-                index: dim.index,
-                size: dim.size,
-                name: dim.name,
-                description: dim.description,
-              })),
-            },
-          })),
+          create: validatedData.tensors.map((tensor) => {
+            // Estimate file size
+            const elementCount = tensor.shape.reduce((acc: number, dim: number) => acc * dim, 1)
+            const bytesPerElement = tensor.dtype.includes('float64') || tensor.dtype.includes('int64') ? 8 :
+                                    tensor.dtype.includes('float32') || tensor.dtype.includes('int32') ? 4 :
+                                    tensor.dtype.includes('float16') || tensor.dtype.includes('int16') ? 2 : 1
+            const estimatedFileSize = elementCount * bytesPerElement
+
+            return {
+              fileName: tensor.fileName,
+              filePath: `milvus://${tensor.fileName}`, // Placeholder for Milvus storage
+              fileSize: estimatedFileSize,
+              shape: JSON.stringify(tensor.shape),
+              dtype: tensor.dtype,
+              dimensions: {
+                create: tensor.dimensions.map((dim) => ({
+                  index: dim.index,
+                  size: dim.size,
+                  name: dim.name,
+                  description: dim.description,
+                })),
+              },
+            }
+          }),
         },
       },
       include: {
@@ -185,15 +198,8 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Update tensor file sizes
-    for (const tensor of dataset.tensors) {
-      const filePath = path.join(process.cwd(), tensor.filePath)
-      const stats = await fs.stat(filePath)
-      await prisma.tensor.update({
-        where: { id: tensor.id },
-        data: { fileSize: stats.size },
-      })
-    }
+    // File sizes are already estimated during creation
+    // Actual file storage will be handled by Milvus when implemented
 
     return NextResponse.json(dataset, { status: 201 })
   } catch (error: any) {
