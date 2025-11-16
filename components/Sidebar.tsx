@@ -91,24 +91,40 @@ export function Sidebar() {
       {/* User Section - Fixed to bottom */}
       <div className="mt-auto p-4 border-t border-cyber-blue/30">
         <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
-          <UserButton
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: 'w-10 h-10 border-2 border-cyber-blue rounded-full',
-              },
-            }}
-          />
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-cyber-light truncate">
-                {user?.username || user?.fullName || 'User'}
-              </p>
-              <p className="text-xs text-cyber-light/50 truncate">
-                {user?.primaryEmailAddress?.emailAddress || ''}
-              </p>
-            </div>
-          )}
+          <div className="relative flex items-center gap-3 flex-1 min-w-0">
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: 'w-10 h-10 border-2 border-cyber-blue rounded-full cursor-pointer',
+                  userButtonPopoverCard: 'bg-black/95 border border-cyber-blue/30',
+                  userButtonPopoverActions: 'bg-black/50',
+                  userButtonPopoverActionButton: 'text-cyber-light hover:bg-cyber-blue/10 hover:text-cyber-blue',
+                  userButtonPopoverActionButtonText: 'text-cyber-light',
+                  userButtonPopoverFooter: 'hidden',
+                },
+              }}
+            />
+            {!collapsed && (
+              <div 
+                className="flex-1 min-w-0 cursor-pointer"
+                onClick={(e) => {
+                  // Trigger the UserButton menu by clicking the avatar
+                  const avatarButton = e.currentTarget.previousElementSibling?.querySelector('button')
+                  if (avatarButton) {
+                    avatarButton.click()
+                  }
+                }}
+              >
+                <p className="text-sm font-medium text-cyber-light truncate hover:text-cyber-blue transition-colors">
+                  {user?.username || user?.fullName || 'User'}
+                </p>
+                <p className="text-xs text-cyber-light/50 truncate hover:text-cyber-light/70 transition-colors">
+                  {user?.primaryEmailAddress?.emailAddress || ''}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
