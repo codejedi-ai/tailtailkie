@@ -111,7 +111,7 @@ export default function HomePage() {
 
         <div className="container mx-auto px-4 py-16 relative">
           <div className="text-center max-w-4xl mx-auto mb-12">
-            <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent animate-pulse">
+            <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent">
               TensorStore
             </h1>
             <p className="text-lg text-cyber-light/60 mb-2">Kaggle for Tensors</p>
