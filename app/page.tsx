@@ -39,7 +39,7 @@ export default function HomePage() {
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      router.push('/user/datasets')
+      router.push('/user')
     }
   }, [isLoaded, isSignedIn, router])
 

@@ -24,7 +24,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { name: 'Home', href: '/', icon: Home },
+  { name: 'Dashboard', href: '/user', icon: Home },
   { name: 'Browse Datasets', href: '/datasets', icon: Database },
   { name: 'Upload', href: '/upload', icon: Upload },
   { name: 'My Datasets', href: '/user/datasets', icon: FolderOpen },
