@@ -15,13 +15,19 @@ export const metadata: Metadata = {
   },
 }
 
+// Force dynamic rendering to avoid Clerk key issues during build
+export const dynamic = 'force-dynamic'
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Get Clerk publishable key - use empty string if not available during build
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''
+  
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={publishableKey}>
       <html lang="en" suppressHydrationWarning>
         <head>
           <link
