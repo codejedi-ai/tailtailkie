@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { UserButton, useUser } from '@clerk/nextjs'
 import {
   Home,
