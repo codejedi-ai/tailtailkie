@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useRef, useEffect } from 'react'
 import { UserButton, useUser } from '@clerk/nextjs'
 import {
   Home,
@@ -36,6 +37,18 @@ export function Sidebar() {
   const { collapsed, setCollapsed } = useSidebar()
   const pathname = usePathname()
   const { user } = useUser()
+  const userButtonRef = useRef<HTMLDivElement>(null)
+
+  const handleUserSectionClick = () => {
+    // Find and click the UserButton's trigger button
+    const userButtonContainer = userButtonRef.current
+    if (userButtonContainer) {
+      const triggerButton = userButtonContainer.querySelector('button')
+      if (triggerButton) {
+        triggerButton.click()
+      }
+    }
+  }
 
   return (
     <div
@@ -90,8 +103,11 @@ export function Sidebar() {
 
       {/* User Section - Fixed to bottom */}
       <div className="mt-auto p-4 border-t border-cyber-blue/30">
-        <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
-          <div className="relative flex items-center gap-3 flex-1 min-w-0">
+        <div 
+          className={cn('flex items-center gap-3 cursor-pointer hover:bg-cyber-blue/5 rounded-lg p-2 -m-2 transition-colors', collapsed && 'justify-center')}
+          onClick={handleUserSectionClick}
+        >
+          <div ref={userButtonRef} className="flex-shrink-0">
             <UserButton
               afterSignOutUrl="/"
               appearance={{
@@ -105,26 +121,17 @@ export function Sidebar() {
                 },
               }}
             />
-            {!collapsed && (
-              <div 
-                className="flex-1 min-w-0 cursor-pointer"
-                onClick={(e) => {
-                  // Trigger the UserButton menu by clicking the avatar
-                  const avatarButton = e.currentTarget.previousElementSibling?.querySelector('button')
-                  if (avatarButton) {
-                    avatarButton.click()
-                  }
-                }}
-              >
-                <p className="text-sm font-medium text-cyber-light truncate hover:text-cyber-blue transition-colors">
-                  {user?.username || user?.fullName || 'User'}
-                </p>
-                <p className="text-xs text-cyber-light/50 truncate hover:text-cyber-light/70 transition-colors">
-                  {user?.primaryEmailAddress?.emailAddress || ''}
-                </p>
-              </div>
-            )}
           </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-cyber-light truncate hover:text-cyber-blue transition-colors">
+                {user?.username || user?.fullName || 'User'}
+              </p>
+              <p className="text-xs text-cyber-light/50 truncate hover:text-cyber-light/70 transition-colors">
+                {user?.primaryEmailAddress?.emailAddress || ''}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
