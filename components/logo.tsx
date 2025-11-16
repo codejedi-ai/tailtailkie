@@ -15,7 +15,6 @@ export function Logo({ className, size = 40 }: LogoProps) {
         height={size}
         className="pixelated"
         style={{
-          imageRendering: 'pixelated',
           imageRendering: 'crisp-edges',
         }}
         priority
