@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s C:UsersdarcyreposKaggle-For-Tensors /b 2)",
+      "Bash(nul)",
+      "Bash(find:*)",
+      "Bash(git -C \"C:\\Users\\darcy\\repos\\Kaggle-For-Tensors\" log --oneline --all)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm update:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm build:*)",
+      "Bash(git add:*)",
+      "Bash(if [ -f nul ])",
+      "Bash(then rm -f nul)",
+      "Bash(fi)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

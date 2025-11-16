@@ -1,397 +1,245 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { Navigation } from '@/components/ui/navigation';
-import type { FormEvent } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useUser } from '@clerk/nextjs'
+import { Search, Upload, Database, TrendingUp, Download } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
-// --- Type Definitions for a strictly typed component ---
-// Define the shape of a single message to be displayed in the UI
-interface Message {
-  id: string;
-  text: string;
-  role: 'user' | 'assistant';
-  timestamp: Date;
+interface Dataset {
+  id: string
+  name: string
+  description: string
+  fileFormat: string
+  totalSize: number
+  downloadCount: number
+  viewCount: number
+  createdAt: string
+  user: {
+    username: string
+    email: string
+  }
+  tensors: Array<{
+    shape: string
+    dtype: string
+  }>
+  _count: {
+    downloads: number
+  }
 }
 
-// Define the possible messages received from the server
-interface ServerMessage {
-  turn_complete?: boolean;
-  interrupted?: boolean;
-  mime_type?: 'audio/pcm' | 'text/plain';
-  data?: string;
-}
-
-// The message sent to the server from the client
-interface ClientMessage {
-  mime_type: 'audio/pcm' | 'text/plain';
-  data: string;
-}
-
-const VathsalaChat: React.FC = () => {
-  // --- State and Refs ---
-  const [messages, setMessages] = useState<Array<Message | string>>([]);
-  const [isSendButtonEnabled, setIsSendButtonEnabled] = useState<boolean>(false);
-  const [isAudioMode, setIsAudioMode] = useState<boolean>(false);
-
-  // Using useRef with explicit types for DOM elements and other mutable values
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const currentMessageIdRef = useRef<string | null>(null);
-  const audioPlayerNodeRef = useRef<AudioWorkletNode | null>(null);
-  const audioPlayerContextRef = useRef<AudioContext | null>(null);
-  const audioRecorderNodeRef = useRef<AudioWorkletNode | null>(null);
-  const audioRecorderContextRef = useRef<AudioContext | null>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
-  const audioBufferRef = useRef<Uint8Array[]>([]);
-  const bufferTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // A stable, unique session ID for the component's lifetime
-  const sessionId = useRef<string>(Math.random().toString().substring(10)).current;
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+export default function HomePage() {
+  const { isSignedIn, user } = useUser()
+  const [datasets, setDatasets] = useState<Dataset[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    fetchDatasets()
+  }, [])
 
-  // --- Helper Functions with explicit types ---
-  const convertFloat32ToPCM = (inputData: Float32Array): ArrayBuffer => {
-    const pcm16 = new Int16Array(inputData.length);
-    for (let i = 0; i < inputData.length; i++) {
-      pcm16[i] = inputData[i] * 0x7fff;
-    }
-    return pcm16.buffer;
-  };
-
-  const startAudioPlayerWorklet = async (): Promise<[AudioWorkletNode, AudioContext]> => {
-    const audioContext = new AudioContext({ sampleRate: 24000 });
-    await audioContext.audioWorklet.addModule('/pcm-player-processor.js');
-    const audioPlayerNode = new AudioWorkletNode(audioContext, 'pcm-player-processor');
-    audioPlayerNode.connect(audioContext.destination);
-    return [audioPlayerNode, audioContext];
-  };
-
-  const startAudioRecorderWorklet = async (audioRecorderHandler: (pcmData: ArrayBuffer) => void): Promise<[AudioWorkletNode, AudioContext, MediaStream]> => {
-    const audioRecorderContext = new AudioContext({ sampleRate: 16000 });
-    console.log("AudioContext sample rate:", audioRecorderContext.sampleRate);
-    await audioRecorderContext.audioWorklet.addModule('/pcm-recorder-processor.js');
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } });
-    const source = audioRecorderContext.createMediaStreamSource(stream);
-    const audioRecorderNode = new AudioWorkletNode(audioRecorderContext, "pcm-recorder-processor");
-    source.connect(audioRecorderNode);
-    audioRecorderNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
-      const pcmData = convertFloat32ToPCM(event.data);
-      audioRecorderHandler(pcmData);
-    };
-    return [audioRecorderNode, audioRecorderContext, stream];
-  };
-
-  const stopMicrophone = (): void => {
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((track) => track.stop());
-      micStreamRef.current = null;
-      console.log("stopMicrophone(): Microphone stopped.");
-    }
-  };
-
-  const base64ToArray = (base64: string): ArrayBuffer => {
-    const binaryString = window.atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes.buffer;
-  };
-
-  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-    let binary = "";
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-  };
-
-  const sendMessage = async (message: ClientMessage): Promise<void> => {
+  async function fetchDatasets(search?: string) {
+    setLoading(true)
     try {
-      const GOOGLE_ADK_CHAT_AGENT_HOST = process.env.NEXT_PUBLIC_GOOGLE_ADK_CHAT_AGENT_HOST || "http://localhost:8000";
-      const send_url = `${GOOGLE_ADK_CHAT_AGENT_HOST}/send/${sessionId}`;
-      const response = await fetch(send_url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(message)
-      });
-      if (!response.ok) {
-        console.error('Failed to send message:', response.statusText);
-      }
+      const params = new URLSearchParams()
+      if (search) params.append('search', search)
+      params.append('limit', '12')
+
+      const response = await fetch(`/api/datasets?${params.toString()}`)
+      const data = await response.json()
+      setDatasets(data.datasets || [])
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error fetching datasets:', error)
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  // Send buffered audio data every 0.2 seconds (verbatim from JS)
-  const sendBufferedAudio = (): void => {
-    if (audioBufferRef.current.length === 0) {
-      return;
-    }
-    
-    // Calculate total length
-    let totalLength = 0;
-    for (const chunk of audioBufferRef.current) {
-      totalLength += chunk.length;
-    }
-    
-    // Combine all chunks into a single buffer
-    const combinedBuffer = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const chunk of audioBufferRef.current) {
-      combinedBuffer.set(chunk, offset);
-      offset += chunk.length;
-    }
-    
-    // Send the combined audio data
-    sendMessage({
-      mime_type: "audio/pcm",
-      data: arrayBufferToBase64(combinedBuffer.buffer),
-    });
-    console.log("[CLIENT TO AGENT] sent %s bytes", combinedBuffer.byteLength);
-    
-    // Clear the buffer
-    audioBufferRef.current = [];
-  };
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    fetchDatasets(searchQuery)
+  }
 
-  // Audio recorder handler (verbatim from JS)
-  const audioRecorderHandler = (pcmData: ArrayBuffer): void => {
-    // Add audio data to buffer
-    audioBufferRef.current.push(new Uint8Array(pcmData));
-    
-    // Start timer if not already running
-    if (!bufferTimerRef.current) {
-      bufferTimerRef.current = setInterval(sendBufferedAudio, 200); // 0.2 seconds
-    }
-  };
-
-  const startAudio = (): void => {
-    setIsAudioMode(true);
-    startAudioPlayerWorklet().then(([node, ctx]) => {
-      audioPlayerNodeRef.current = node;
-      audioPlayerContextRef.current = ctx;
-    });
-    startAudioRecorderWorklet(audioRecorderHandler).then(
-      ([node, ctx, stream]) => {
-        audioRecorderNodeRef.current = node;
-        audioRecorderContextRef.current = ctx;
-        micStreamRef.current = stream;
-      }
-    );
-  };
-
-  // Stop audio recording and cleanup (verbatim from JS)
-  const stopAudio = (): void => {
-    setIsAudioMode(false);
-    
-    if (bufferTimerRef.current) {
-      clearInterval(bufferTimerRef.current);
-      bufferTimerRef.current = null;
-    }
-    
-    // Send any remaining buffered audio
-    if (audioBufferRef.current.length > 0) {
-      sendBufferedAudio();
-    }
-    
-    stopMicrophone();
-    
-    if (audioPlayerContextRef.current && audioPlayerContextRef.current.state !== 'closed') {
-      audioPlayerContextRef.current.close();
-      audioPlayerContextRef.current = null;
-    }
-    if (audioRecorderContextRef.current && audioRecorderContextRef.current.state !== 'closed') {
-      audioRecorderContextRef.current.close();
-      audioRecorderContextRef.current = null;
-    }
-  };
-
-  // SSE (Server-Sent Events) handling - verbatim from JS
-  useEffect(() => {
-    const connectSSE = () => {
-      const GOOGLE_ADK_CHAT_AGENT_HOST = process.env.NEXT_PUBLIC_GOOGLE_ADK_CHAT_AGENT_HOST || "http://localhost:8000";
-      const sse_url = `${GOOGLE_ADK_CHAT_AGENT_HOST}/events/${sessionId}?is_audio=${isAudioMode}`;
-      
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-      
-      // Connect to SSE endpoint
-      eventSourceRef.current = new EventSource(sse_url);
-
-      // Handle connection open
-      eventSourceRef.current.onopen = function () {
-        console.log("SSE connection opened.");
-        setMessages(["Connection opened"]);
-        setIsSendButtonEnabled(true);
-      };
-
-      // Handle incoming messages
-      eventSourceRef.current.onmessage = function (event: MessageEvent) {
-        const message_from_server: ServerMessage = JSON.parse(event.data);
-        console.log("[AGENT TO CLIENT] ", message_from_server);
-
-        // Check if the turn is complete
-        if (message_from_server.turn_complete && message_from_server.turn_complete === true) {
-          currentMessageIdRef.current = null;
-          return;
-        }
-
-        // Check for interrupt message
-        if (message_from_server.interrupted && message_from_server.interrupted === true) {
-          // Stop audio playback if it's playing
-          if (audioPlayerNodeRef.current) {
-            audioPlayerNodeRef.current.port.postMessage({ command: "endOfAudio" });
-          }
-          return;
-        }
-
-        // If it's audio, play it
-        if (message_from_server.mime_type === "audio/pcm" && audioPlayerNodeRef.current && message_from_server.data) {
-          audioPlayerNodeRef.current.port.postMessage(base64ToArray(message_from_server.data));
-        }
-
-        // If it's a text, print it
-        if (message_from_server.mime_type === "text/plain" && message_from_server.data) {
-          // add a new message for a new turn
-          if (currentMessageIdRef.current == null) {
-            currentMessageIdRef.current = Math.random().toString(36).substring(7);
-            const newMessage: Message = { 
-              id: currentMessageIdRef.current, 
-              text: message_from_server.data,
-              role: 'assistant',
-              timestamp: new Date()
-            };
-            setMessages(prevMessages => [...prevMessages, newMessage]);
-          } else {
-            // Add message text to the existing message element
-            setMessages(prevMessages =>
-              prevMessages.map(msg =>
-                typeof msg !== 'string' && msg.id === currentMessageIdRef.current
-                  ? { ...msg, text: msg.text + message_from_server.data }
-                  : msg
-              )
-            );
-          }
-        }
-      };
-
-      // Handle connection close
-      eventSourceRef.current.onerror = function () {
-        console.log("SSE connection error or closed.");
-        setIsSendButtonEnabled(false);
-        setMessages(prevMessages => [...prevMessages, "Connection closed"]);
-        eventSourceRef.current?.close();
-        setTimeout(function () {
-          console.log("Reconnecting...");
-          connectSSE();
-        }, 5000);
-      };
-    };
-
-    connectSSE();
-
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, [isAudioMode, sessionId]);
-
-  // Start the audio only when the user clicked the button (verbatim from JS)
-  const handleVoiceToggle = () => {
-    if (isAudioMode) {
-      stopAudio();
-    } else {
-      startAudio();
-      // Close current connection and reconnect with audio mode (following JS pattern)
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    }
-  };
+  function formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
+  }
 
   return (
-    <div className="min-h-screen bg-cyber-dark relative overflow-hidden">
-      <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/background.png)' }}
-      />
-      <div className="fixed inset-0 bg-black/70" />
-      <div className="scan-line" />
-      <Navigation />
-      <div className="relative z-10 flex flex-col h-screen pt-16">
-        <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-4">
-          <div className="flex-1 mb-4 bg-black/40 border-cyber-blue neon-border backdrop-blur-sm rounded-lg overflow-hidden flex flex-col">
-            <div className="flex-1 p-6 overflow-y-auto space-y-4 pr-2">
-              {messages.length === 0 && (
-                <div className="text-center text-cyber-light font-mono py-8 h-full flex flex-col justify-center items-center">
-                  <p className="text-lg mb-2">Welcome to the Neural Interface</p>
-                  <p className="text-sm opacity-70">Press "CONNECT VOICE" to communicate with Vathsala</p>
-                </div>
+    <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+
+        <div className="container mx-auto px-4 py-16 relative">
+          <div className="text-center max-w-4xl mx-auto mb-12">
+            <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent animate-pulse">
+              Kaggle for Tensors
+            </h1>
+            <p className="text-xl text-cyber-light/80 mb-8">
+              Upload and share pure tensor datasets. No data engineering needed - just vectors ready for training.
+            </p>
+
+            <div className="flex gap-4 justify-center">
+              {isSignedIn ? (
+                <Link href="/upload">
+                  <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg">
+                    <Upload className="mr-2" />
+                    Upload Dataset
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/sign-up">
+                  <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg">
+                    Get Started
+                  </Button>
+                </Link>
               )}
-              {messages.map((msg, index) => (
-                typeof msg === 'string' ? (
-                  <div key={`sys-${index}`} className="text-center text-cyber-light/50 text-xs font-mono italic">
-                    {msg}
-                  </div>
-                ) : (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} message-enter`}
-                  >
-                    <div
-                      className={`max-w-[80%] p-4 rounded-lg font-mono ${
-                        msg.role === 'user'
-                          ? 'bg-cyber-blue/20 border border-cyber-blue text-cyber-light neon-border'
-                          : 'bg-cyber-pink/20 border border-cyber-pink text-white neon-border-pink'
-                      }`}
-                    >
-                      <div className="text-sm mb-1 opacity-70">
-                        {msg.role === 'user' ? 'USER' : 'VATHSALA'}
-                      </div>
-                      <div className="whitespace-pre-wrap">{msg.text}</div>
-                      <div className="text-xs mt-2 opacity-50">
-                        {msg.timestamp.toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                )
-              ))}
-              <div ref={messagesEndRef} />
+              <Link href="/datasets">
+                <Button variant="outline" className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10 font-bold py-6 px-8 text-lg">
+                  <Database className="mr-2" />
+                  Browse Datasets
+                </Button>
+              </Link>
             </div>
           </div>
-          <div className="pb-6 flex justify-center items-center">
-            <button
-              type="button"
-              onClick={handleVoiceToggle}
-              disabled={!isAudioMode && !isSendButtonEnabled && messages.length > 0}
-              className={`px-8 py-4 font-cyber font-bold rounded-lg transition-all duration-300 flex items-center gap-3 text-lg
-                ${isAudioMode 
-                  ? 'bg-red-500/20 border-2 border-red-500 text-red-400 neon-border-red hover:bg-red-500/30' 
-                  : 'bg-cyber-blue/20 border-2 border-cyber-blue text-cyber-blue neon-border hover:bg-cyber-blue/30'
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {isAudioMode ? <MicOff /> : <Mic />}
-              {isAudioMode ? 'DISCONNECT' : 'CONNECT VOICE'}
-            </button>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
+            <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-6 text-center backdrop-blur-sm">
+              <Database className="w-12 h-12 mx-auto mb-3 text-cyber-blue" />
+              <div className="text-3xl font-bold text-cyber-blue">{datasets.length}</div>
+              <div className="text-cyber-light/60">Datasets</div>
+            </div>
+            <div className="bg-black/50 border border-cyber-pink/30 rounded-lg p-6 text-center backdrop-blur-sm">
+              <Download className="w-12 h-12 mx-auto mb-3 text-cyber-pink" />
+              <div className="text-3xl font-bold text-cyber-pink">
+                {datasets.reduce((acc, d) => acc + d.downloadCount, 0)}
+              </div>
+              <div className="text-cyber-light/60">Downloads</div>
+            </div>
+            <div className="bg-black/50 border border-cyber-purple/30 rounded-lg p-6 text-center backdrop-blur-sm">
+              <TrendingUp className="w-12 h-12 mx-auto mb-3 text-cyber-purple" />
+              <div className="text-3xl font-bold text-cyber-purple">100%</div>
+              <div className="text-cyber-light/60">Vector Ready</div>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-12">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-cyber-light/50" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search datasets by name or description..."
+                className="w-full pl-12 pr-4 py-4 bg-black/50 border border-cyber-blue/30 rounded-lg text-cyber-light placeholder:text-cyber-light/30 focus:border-cyber-blue focus:outline-none"
+              />
+            </div>
+          </form>
+
+          {/* Recent Datasets */}
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl font-bold text-cyber-light mb-6">Recent Datasets</h2>
+
+            {loading ? (
+              <div className="text-center py-12 text-cyber-light/60">Loading datasets...</div>
+            ) : datasets.length === 0 ? (
+              <div className="text-center py-12 text-cyber-light/60">
+                No datasets found. Be the first to upload one!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {datasets.map((dataset) => (
+                  <Link key={dataset.id} href={`/datasets/${dataset.id}`}>
+                    <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-6 hover:border-cyber-pink transition-all hover:shadow-[0_0_20px_rgba(255,0,128,0.3)] cursor-pointer h-full">
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-xl font-bold text-cyber-light">{dataset.name}</h3>
+                        <span className="px-2 py-1 bg-cyber-blue/20 text-cyber-blue text-xs rounded">
+                          .{dataset.fileFormat}
+                        </span>
+                      </div>
+
+                      <p className="text-cyber-light/70 text-sm mb-4 line-clamp-2">
+                        {dataset.description || 'No description provided'}
+                      </p>
+
+                      {dataset.tensors.length > 0 && (
+                        <div className="mb-4 text-xs">
+                          <div className="text-cyber-light/50">Shape:</div>
+                          <div className="text-cyber-purple font-mono">
+                            {JSON.parse(dataset.tensors[0].shape).join(' × ')}
+                          </div>
+                          <div className="text-cyber-light/50 mt-1">Type: <span className="text-cyber-green">{dataset.tensors[0].dtype}</span></div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-cyber-light/50">
+                        <span>By {dataset.user.username || dataset.user.email.split('@')[0]}</span>
+                        <span>{formatBytes(dataset.totalSize)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-4 mt-3 text-xs text-cyber-light/50">
+                        <span className="flex items-center gap-1">
+                          <Download className="w-3 h-3" />
+                          {dataset.downloadCount}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          {dataset.viewCount}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="border-t border-cyber-blue/20 py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center text-cyber-light mb-12">Why Kaggle for Tensors?</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyber-blue to-cyber-purple flex items-center justify-center">
+                <Database className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-cyber-light mb-2">Pure Tensors Only</h3>
+              <p className="text-cyber-light/70">
+                No messy CSV files or unstructured data. Everything is already in tensor format, ready for PyTorch or NumPy.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyber-pink to-cyber-purple flex items-center justify-center">
+                <Search className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-cyber-light mb-2">Semantic Dimensions</h3>
+              <p className="text-cyber-light/70">
+                Each dimension is annotated with its meaning - batch size, channels, height, width, etc.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyber-purple to-cyber-green flex items-center justify-center">
+                <Upload className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-cyber-light mb-2">Easy Upload</h3>
+              <p className="text-cyber-light/70">
+                Upload .pt, .npy, .safetensors, or .h5 files. Define shapes and dimensions in a simple form.
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  );
-};
-
-export default VathsalaChat;
+  )
+}

@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  username  String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  datasets  Dataset[]
+  downloads Download[]
+}
+
+model Dataset {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Metadata
+  totalSize   Int      // in bytes
+  fileFormat  String   // pt, npy, npz, safetensors, h5
+  tags        String?  // JSON array of tags
+  isPublic    Boolean  @default(true)
+
+  // Stats
+  downloadCount Int    @default(0)
+  viewCount     Int    @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tensors     Tensor[]
+  downloads   Download[]
+
+  @@index([userId])
+  @@index([isPublic])
+}
+
+model Tensor {
+  id          String   @id @default(cuid())
+  datasetId   String
+  dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  // File info
+  fileName    String
+  filePath    String   // relative path in uploads directory
+  fileSize    Int      // in bytes
+
+  // Tensor metadata
+  shape       String   // JSON array e.g., "[128, 256, 3]"
+  dtype       String   // float32, int64, etc.
+
+  createdAt   DateTime @default(now())
+
+  dimensions  Dimension[]
+
+  @@index([datasetId])
+}
+
+model Dimension {
+  id          String   @id @default(cuid())
+  tensorId    String
+  tensor      Tensor   @relation(fields: [tensorId], references: [id], onDelete: Cascade)
+
+  index       Int      // 0, 1, 2, etc.
+  size        Int      // size of this dimension
+  name        String   // e.g., "batch", "channels", "height", "width"
+  description String?  // detailed explanation of what this dimension represents
+
+  @@index([tensorId])
+  @@unique([tensorId, index])
+}
+
+model Download {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  datasetId  String
+  dataset    Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([datasetId])
+}
