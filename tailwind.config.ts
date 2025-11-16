@@ -47,9 +47,19 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Cyberpunk colors
-        'cyber-blue': '#00ffff',
-        'cyber-pink': '#ff0080',
+        // Pixel Art colors (matching favicon)
+        'pixel-green': '#00ff41',
+        'pixel-green-light': '#39ff6f',
+        'pixel-green-dark': '#00cc33',
+        'pixel-purple': '#8b00ff',
+        'pixel-purple-light': '#a855f7',
+        'pixel-purple-dark': '#6b00b8',
+        'pixel-purple-bg': '#4a148c',
+        'pixel-purple-bg-dark': '#1a0033',
+        'pixel-white': '#ffffff',
+        // Legacy cyber colors for compatibility
+        'cyber-blue': '#00ff41',
+        'cyber-pink': '#8b00ff',
         'cyber-purple': '#8b00ff',
         'cyber-green': '#00ff41',
         'cyber-dark': '#0a0a0f',

@@ -68,10 +68,23 @@
   }
 }
 
-/* Cyberpunk Theme Variables */
+/* Pixel Art Theme Variables - Matching favicon aesthetic */
 :root {
-  --cyber-blue: #00ffff;
-  --cyber-pink: #ff0080;
+  --pixel-green: #00ff41;
+  --pixel-green-light: #39ff6f;
+  --pixel-green-dark: #00cc33;
+  --pixel-purple: #8b00ff;
+  --pixel-purple-light: #a855f7;
+  --pixel-purple-dark: #6b00b8;
+  --pixel-purple-bg: #4a148c;
+  --pixel-purple-bg-dark: #1a0033;
+  --pixel-white: #ffffff;
+  --pixel-dark: #0a0a0f;
+  --pixel-light: #e0e0e0;
+  
+  /* Legacy cyber colors for compatibility */
+  --cyber-blue: #00ff41;
+  --cyber-pink: #8b00ff;
   --cyber-purple: #8b00ff;
   --cyber-green: #00ff41;
   --cyber-dark: #0a0a0f;
@@ -242,24 +255,117 @@
 .border-cyber-blue { border-color: var(--cyber-blue); }
 .border-cyber-pink { border-color: var(--cyber-pink); }
 
-/* Scrollbar Styling */
+/* Pixel Art Effects */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.pixel-border {
+  border: 2px solid var(--pixel-green);
+  box-shadow: 
+    0 0 10px var(--pixel-green),
+    inset 0 0 10px rgba(0, 255, 65, 0.2);
+}
+
+.pixel-border-purple {
+  border: 2px solid var(--pixel-purple);
+  box-shadow: 
+    0 0 10px var(--pixel-purple),
+    inset 0 0 10px rgba(139, 0, 255, 0.2);
+}
+
+.pixel-glow {
+  filter: drop-shadow(0 0 8px var(--pixel-green));
+}
+
+.pixel-glow-purple {
+  filter: drop-shadow(0 0 8px var(--pixel-purple));
+}
+
+.pixel-bg {
+  background: 
+    linear-gradient(135deg, var(--pixel-purple-bg-dark) 0%, var(--pixel-purple-bg) 100%);
+  position: relative;
+}
+
+.pixel-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 2px 2px, var(--pixel-white) 1px, transparent 0);
+  background-size: 20px 20px;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.pixel-text {
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+.pixel-card {
+  background: rgba(26, 0, 51, 0.8);
+  border: 3px solid var(--pixel-green);
+  box-shadow: 
+    0 0 15px var(--pixel-green),
+    inset 0 0 15px rgba(0, 255, 65, 0.1);
+  position: relative;
+}
+
+.pixel-card::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(45deg, var(--pixel-green), var(--pixel-purple));
+  z-index: -1;
+  opacity: 0.3;
+}
+
+/* Pixel Star Animation */
+@keyframes pixelStar {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.pixel-star {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  background: var(--pixel-white);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: pixelStar 2s ease-in-out infinite;
+}
+
+/* Scrollbar Styling - Pixel Art */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--pixel-purple-bg-dark);
+  border: 2px solid var(--pixel-purple);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--cyber-blue);
-  border-radius: 4px;
-  box-shadow: 0 0 5px var(--cyber-blue);
+  background: var(--pixel-green);
+  border: 2px solid var(--pixel-purple-dark);
+  box-shadow: 0 0 5px var(--pixel-green);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--cyber-pink);
-  box-shadow: 0 0 5px var(--cyber-pink);
+  background: var(--pixel-green-light);
+  box-shadow: 0 0 10px var(--pixel-green);
 }
 
 /* Button Hover Effects */
