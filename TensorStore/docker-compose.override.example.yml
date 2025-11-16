@@ -1,0 +1,18 @@
+# Example override file for local development
+# Copy this to docker-compose.override.yml and customize
+
+version: '3.8'
+
+services:
+  backend:
+    environment:
+      # Override with your local values
+      CLERK_SECRET_KEY: sk_test_your_key_here
+      MILVUS_URI: http://milvus:19530
+      MILVUS_TOKEN: your_milvus_token_here
+
+  frontend:
+    environment:
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_your_key_here
+      CLERK_SECRET_KEY: sk_test_your_key_here
+

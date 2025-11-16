@@ -1,0 +1,9 @@
+repos:
+- repo: local
+  hooks:
+  - id: commit-message
+    name: validate conventional commit message format
+    entry: '\A(?!(feat|docs|refactor|fix|test|break|revert|chore): [A-Z]{2,10}-\d{1,6} .+)'
+    args: [--multiline]
+    stages: [commit-msg]
+    language: pygrep

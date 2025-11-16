@@ -1,0 +1,133 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "application.name" . }}
+  labels:
+    {{- include "application.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.application.replicas }}
+  selector:
+    matchLabels:
+      {{- include "application.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "application.labels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+    spec:
+      initContainers:
+      - name: {{ include "application.name" . }}
+        image: "{{ .Values.application.image }}:{{ .Chart.AppVersion }}-init"
+        imagePullPolicy: {{ .Values.application.imagePullPolicy }}
+        resources:
+          {{- toYaml .Values.application.resources | nindent 12 }}
+        {{- if .Values.application.securityContext }}
+        securityContext:
+          {{- toYaml .Values.application.securityContext | nindent 12 }}
+        {{- end }}
+        {{- if .Values.application.volumeMounts }}
+        volumeMounts:
+          {{- toYaml .Values.application.volumeMounts | nindent 12 }}
+        {{- end }}
+        envFrom:
+          - configMapRef:
+              name: {{ include "application-config.name" . }}
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.databaseConnectionSecretName }}
+              key: DATABASE_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.databaseConnectionSecretName }}
+              key: DATABASE_PASSWORD
+        - name: MONGODB_URI
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "application-config.name" . }}
+              key: MONGODB_URI
+        - name: FLASK_APP
+          value: /app/manage.py
+        command:
+          - bash
+          - -c
+          - "sleep 10 && /app/venv/bin/python /app/migrations/is_database_ready.py && /app/venv/bin/flask db upgrade"
+
+      containers:
+        - name: {{ include "application.name" . }}
+          image: "{{ .Values.application.image }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.application.imagePullPolicy }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.application.readinessProbe.path }}
+              port: {{ .Values.application.ports.application.port }}
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.application.readinessProbe.initialDelay }}
+            periodSeconds: {{ .Values.application.readinessProbe.period }}
+            timeoutSeconds: {{ .Values.application.readinessProbe.timeout }}
+          {{- if .Values.application.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.application.livenessProbe.path }}
+              port: {{ .Values.application.ports.application.port }}
+              scheme: HTTP
+            initialDelaySeconds: {{ .Values.application.livenessProbe.initialDelay }}
+            periodSeconds: {{ .Values.application.livenessProbe.period }}
+            timeoutSeconds: {{ .Values.application.livenessProbe.timeout }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.application.ports.application.port }}
+              name: {{ .Values.application.ports.application.name }}
+          resources:
+            {{- toYaml .Values.application.resources | nindent 12 }}
+          {{- if .Values.application.securityContext }}
+          securityContext:
+            {{- toYaml .Values.application.securityContext | nindent 12 }}
+          {{- end }}
+          {{- if .Values.application.volumeMounts }}
+          volumeMounts:
+            {{- toYaml .Values.application.volumeMounts | nindent 12 }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "application-config.name" . }}
+          env:
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.databaseConnectionSecretName }}
+                key: DATABASE_USERNAME
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.databaseConnectionSecretName }}
+                key: DATABASE_PASSWORD
+          - name: MONGODB_URI
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "application-config.name" . }}
+                key: MONGODB_URI
+          - name: MILVUS_URI
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "application-config.name" . }}
+                key: MILVUS_URI
+          - name: MILVUS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: tensorstore-secrets
+                key: milvus-token
+          - name: CLERK_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: tensorstore-secrets
+                key: clerk-secret-key
+          
+      {{if .Values.application.volumes }}
+      volumes:
+        {{- toYaml .Values.application.volumes | nindent 8 }}
+      {{ end }}

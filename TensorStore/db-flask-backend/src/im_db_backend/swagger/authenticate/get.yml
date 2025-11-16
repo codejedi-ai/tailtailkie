@@ -1,0 +1,7 @@
+Authenticate GET endpoint logs out current user
+---
+tags:
+- authenticate
+responses:
+  200:
+    description: Success if current user is successfully logged out

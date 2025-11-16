@@ -1,0 +1,33 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "internal-nginx-ingress.name" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "internal-nginx-ingress.labels" . | nindent 4 }}
+  {{- if .Values.internalNginxIngress.cluster }}
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.internalNginxIngress.class }}
+  {{- if .Values.internalNginxIngress.cluster }}
+  tls:
+  - hosts:
+    - {{ include "application.name" . }}.{{ .Values.internalNginxIngress.cluster }}.{{ .Values.internalNginxIngress.environmentSuffix }}.your-domain.com
+    secretName: {{ include "application.name" . }}-{{ .Values.internalNginxIngress.cluster }}-{{ .Values.internalNginxIngress.environmentSuffix }}-your-domain-com
+  {{- end }}
+  rules:
+  - http:
+      paths:
+      - path: /service
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "application.name" . }}
+            port:
+              number: 80
+    {{- if .Values.internalNginxIngress.cluster }}
+    host: {{ include "application.name" . }}.{{ .Values.internalNginxIngress.cluster }}.{{ .Values.internalNginxIngress.environmentSuffix }}.your-domain.com
+    {{- end }}

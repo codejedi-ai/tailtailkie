@@ -1,0 +1,14 @@
+imdb GET endpoint returns last syncronization detail
+---
+tags:
+  - imdb
+# parameters:
+# - in: body
+#   name: IMDB authorization token
+#   schema:
+#     $ref: "#/definitions/IncidentGETRequest"
+responses:
+  200:
+    description: Last synchronization detail
+    schema:
+      $ref: "#/definitions/IncidentGETResponse"

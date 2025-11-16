@@ -1,0 +1,8 @@
+Root GET endpoint validates application accessibility
+---
+tags:
+- root
+responses:
+  200:
+    description: Simple welcome message
+    type: string

@@ -1,0 +1,41 @@
+---
+application:
+  replicas: 2
+  image: gcr.io/releaseinf/oanda-sre-im-db-backend
+  imagePullPolicy: Always
+  readinessProbe:
+    path: "/service/api/"
+    initialDelay: 0
+    period: 10
+    timeout: 1
+  # Don't use liveness probes unless you have a specific situation where
+  # you'd find that useful
+  # livenessProbe:
+  #   path: "/service/api/v1/yourlivenessprobepathhere/"
+  #   initialDelay: 305
+  #   period: 60
+  #   timeout: 5
+  ports:
+    application:
+      name: http
+      port: 5000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 500Mi
+    limits:
+      cpu: 750m
+      memory: 1000Mi
+
+applicationService:
+  type: ClusterIP
+  port: 80
+
+config:
+  environment: DEV
+  owner: sre
+  platform: live  # possible values: live, demo, dr, bi
+  urlPrefix: /service/api
+
+internalNginxIngress:
+  class: nginx-internal
