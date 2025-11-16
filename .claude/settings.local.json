@@ -17,7 +17,12 @@
       "Bash(then rm -f nul)",
       "Bash(fi)",
       "Bash(git commit:*)",
-      "Bash(pnpm dev)"
+      "Bash(pnpm dev)",
+      "Bash(npm install:*)",
+      "Bash(del prisma.config.ts)",
+      "Bash(ren:*)",
+      "Bash(cat:*)",
+      "Bash(node test-mongo.js:*)"
     ],
     "deny": [],
     "ask": []
