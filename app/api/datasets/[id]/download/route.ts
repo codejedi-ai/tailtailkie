@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateUser } from '@/lib/auth'
+import { isMilvusConfigured, getCollectionName } from '@/lib/milvus'
+import getMilvusClient from '@/lib/milvus'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
@@ -63,20 +65,81 @@ export async function GET(
     }
 
     // Check if Milvus is configured
-    const milvusHost = process.env.MILVUS_HOST || process.env.MILVUS_URI
-    if (!milvusHost) {
+    if (!isMilvusConfigured()) {
       return NextResponse.json(
         {
           error: 'Milvus vector store is not configured. Please connect and implement Milvus before downloading files.',
-          message: 'File download requires Milvus integration. Please configure MILVUS_HOST or MILVUS_URI environment variables and implement the Milvus connection.',
+          message: 'File download requires Milvus integration. Please configure MILVUS_URI and MILVUS_TOKEN environment variables.',
         },
         { status: 503 } // 503 Service Unavailable
       )
     }
 
-    // NOTE: File download functionality requires Milvus implementation.
-    // Files are not stored locally - implementation will use Milvus vector store.
-    // For now, return metadata only.
+    // Get Milvus client
+    const milvusClient = await getMilvusClient()
+
+    // Get the dataset's Milvus collection
+    const collectionName = getCollectionName(dataset.id)
+
+    // Check if collection exists
+    const collectionExists = await milvusClient.hasCollection({
+      collection_name: collectionName,
+    })
+
+    if (!collectionExists) {
+      return NextResponse.json(
+        { error: 'Dataset collection not found in Milvus. Vectors may not have been processed yet.' },
+        { status: 404 }
+      )
+    }
+
+    // If single tensor, reconstruct and return it
+    if (dataset.tensors.length === 1) {
+      const tensor = dataset.tensors[0]
+      const shape = JSON.parse(tensor.shape) as number[]
+      
+      // Query all vectors from the collection for this tensor
+      const queryResult = await milvusClient.query({
+        collection_name: collectionName,
+        expr: `tensor_id == "${tensor.id}"`,
+        output_fields: ['vector', 'index'],
+        limit: shape[0], // N - number of vectors
+      })
+
+      if (!queryResult || queryResult.length === 0) {
+        return NextResponse.json(
+          { error: 'No vectors found in Milvus for this tensor. Tensor may not have been processed yet.' },
+          { status: 404 }
+        )
+      }
+
+      // Sort by index to maintain order
+      queryResult.sort((a: any, b: any) => a.index - b.index)
+
+      // Reconstruct tensor from vectors
+      // TODO: Implement tensor reconstruction
+      // This requires:
+      // 1. Unflattening vectors back into original shape
+      // 2. Converting back to the original tensor format (.pt, .npy, etc.)
+      // 3. Returning the file
+      //
+      // For now, return metadata indicating reconstruction is needed
+      return NextResponse.json(
+        {
+          error: 'Tensor reconstruction from vectors is not yet implemented',
+          message: 'Vectors are stored in Milvus but tensor file reconstruction needs to be implemented.',
+          tensor: {
+            fileName: tensor.fileName,
+            shape: shape,
+            dtype: tensor.dtype,
+            vectorCount: queryResult.length,
+          },
+        },
+        { status: 501 } // 501 Not Implemented
+      )
+    }
+
+    // Multiple tensors - return metadata
     const metadata = {
       name: dataset.name,
       description: dataset.description,
@@ -91,13 +154,14 @@ export async function GET(
           name: d.name,
           description: d.description,
         })),
+        downloadUrl: `/api/datasets/${id}/download/${t.id}`,
       })),
       created: dataset.createdAt,
-      message: 'File download requires Milvus implementation to be completed. Milvus connection is configured but the download handler needs implementation.',
+      message: 'Multiple tensors detected. Tensor reconstruction from Milvus vectors needs to be implemented.',
     }
 
     return NextResponse.json(metadata, {
-      status: 501, // 501 Not Implemented
+      status: 200,
       headers: {
         'Content-Type': 'application/json',
       },

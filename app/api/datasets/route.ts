@@ -3,6 +3,9 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateUser } from '@/lib/auth'
 import { CreateDatasetSchema } from '@/lib/types'
+import { isMilvusConfigured, getCollectionName, calculateVectorDimension } from '@/lib/milvus'
+import getMilvusClient from '@/lib/milvus'
+import { DataType } from '@zilliz/milvus2-sdk-node'
 import path from 'path'
 
 // Force dynamic rendering for this route
@@ -122,23 +125,22 @@ export async function POST(req: NextRequest) {
     const validatedData = CreateDatasetSchema.parse(body)
 
     // Check if Milvus is configured
-    const milvusHost = process.env.MILVUS_HOST || process.env.MILVUS_URI
-    if (!milvusHost) {
+    if (!isMilvusConfigured()) {
       return NextResponse.json(
         {
           error: 'Milvus vector store is not configured. Please connect and implement Milvus before creating datasets with files.',
-          message: 'Dataset creation with files requires Milvus integration. Please configure MILVUS_HOST or MILVUS_URI environment variables.',
+          message: 'Dataset creation with files requires Milvus integration. Please configure MILVUS_URI and MILVUS_TOKEN environment variables.',
         },
         { status: 503 } // 503 Service Unavailable
       )
     }
 
-    // NOTE: File storage requires Milvus implementation. Planned implementation will use Milvus.
-    // For now, we'll create dataset metadata without file validation.
-    // Calculate total size from tensor metadata (estimated)
+    // Get Milvus client
+    const milvusClient = await getMilvusClient()
+
+    // Calculate total size from tensor metadata
     let totalSize = 0
     for (const tensor of validatedData.tensors) {
-      // Estimate size based on shape and dtype (rough approximation)
       const shape = tensor.shape
       const elementCount = shape.reduce((acc: number, dim: number) => acc * dim, 1)
       const bytesPerElement = tensor.dtype.includes('float64') || tensor.dtype.includes('int64') ? 8 :
@@ -152,7 +154,7 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(firstTensor.fileName).toLowerCase().replace('.', '')
     const fileFormat = ext === 'pth' ? 'pt' : ext === 'hdf5' ? 'h5' : ext
 
-    // Create dataset with tensors and dimensions
+    // Create dataset in MongoDB first (to get the dataset ID)
     const dataset = await prisma.dataset.create({
       data: {
         name: validatedData.name,
@@ -198,8 +200,88 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // File sizes are already estimated during creation
-    // Actual file storage will be handled by Milvus when implemented
+    // Create Milvus collection for this dataset
+    // Each dataset gets its own collection where each vector represents one unit from the first axis
+    const collectionName = getCollectionName(dataset.id)
+    
+    // Calculate vector dimension from first tensor (all tensors in a dataset should have same vector dim)
+    const vectorDim = calculateVectorDimension(validatedData.tensors[0].shape)
+    const batchSize = validatedData.tensors[0].shape[0] // N - number of vectors
+
+    // Check if collection already exists
+    const collectionExists = await milvusClient.hasCollection({
+      collection_name: collectionName,
+    })
+
+    if (!collectionExists) {
+      // Create collection for storing vectors
+      // Schema: id (primary key), vector (flattened tensor data), tensor_id (which tensor file), index (position in batch)
+      await milvusClient.createCollection({
+        collection_name: collectionName,
+        description: `Dataset: ${validatedData.name}`,
+        fields: [
+          {
+            name: 'id',
+            type: DataType.VarChar,
+            is_primary_key: true,
+            max_length: 255,
+          },
+          {
+            name: 'vector',
+            type: DataType.FloatVector,
+            dim: vectorDim,
+          },
+          {
+            name: 'tensor_id',
+            type: DataType.VarChar,
+            max_length: 255,
+          },
+          {
+            name: 'index',
+            type: DataType.Int64, // Position in the batch (0 to N-1)
+          },
+        ],
+      })
+
+      // Create index for vector similarity search
+      await milvusClient.createIndex({
+        collection_name: collectionName,
+        field_name: 'vector',
+        index_type: 'HNSW',
+        metric_type: 'L2',
+        params: {
+          M: 16,
+          efConstruction: 200,
+        },
+      })
+
+      // Load collection for querying
+      await milvusClient.loadCollection({
+        collection_name: collectionName,
+      })
+    }
+
+    // TODO: Parse tensor files and extract vectors
+    // This requires parsing .pt, .npy, .safetensors, .h5 files
+    // Options:
+    // 1. Use a Python microservice/API to parse tensors
+    // 2. Use Node.js libraries (limited support)
+    // 3. Require users to provide pre-parsed data
+    // 
+    // For each tensor file:
+    // 1. Retrieve from temporary storage (TEMP_FILES_COLLECTION)
+    // 2. Parse tensor file based on format
+    // 3. Extract vectors: flatten dimensions 1+ for each unit in dimension 0
+    // 4. Insert vectors into Milvus collection
+    //
+    // Example for shape (N, 12, 8, 8):
+    // - N vectors
+    // - Each vector: 12 * 8 * 8 = 768 dimensions (flattened)
+    // - Insert N rows into Milvus
+
+    // NOTE: Tensor parsing implementation needed
+    // For now, we create the collection structure but don't populate it yet
+    console.log(`Created Milvus collection: ${collectionName} with vector dimension: ${vectorDim}, expected ${batchSize} vectors`)
 
     return NextResponse.json(dataset, { status: 201 })
   } catch (error: any) {
