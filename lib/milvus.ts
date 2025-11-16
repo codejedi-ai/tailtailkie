@@ -1,4 +1,5 @@
-import { MilvusClient } from '@zilliz/milvus2-sdk-node'
+// Dynamic import to avoid build-time issues
+type MilvusClientType = any
 
 // Helper function to check if Milvus is configured
 export function isMilvusConfigured(): boolean {
@@ -28,11 +29,11 @@ function getMilvusConfig() {
   return milvusConfig
 }
 
-let milvusClient: MilvusClient | null = null
-let milvusClientPromise: Promise<MilvusClient> | null = null
+let milvusClient: MilvusClientType | null = null
+let milvusClientPromise: Promise<MilvusClientType> | null = null
 
-// Initialize Milvus client
-export async function getMilvusClient(): Promise<MilvusClient> {
+// Initialize Milvus client with dynamic import
+export async function getMilvusClient(): Promise<MilvusClientType> {
   if (!isMilvusConfigured()) {
     throw new Error('Milvus is not configured. Please set MILVUS_URI and MILVUS_TOKEN environment variables.')
   }
@@ -47,11 +48,14 @@ export async function getMilvusClient(): Promise<MilvusClient> {
   }
 
   if (!milvusClientPromise) {
+    // Dynamic import to avoid build-time issues
+    const { MilvusClient } = await import('@zilliz/milvus2-sdk-node')
+    
     if (process.env.NODE_ENV === 'development') {
       // In development mode, use a global variable so that the value
       // is preserved across module reloads caused by HMR (Hot Module Replacement).
       let globalWithMilvus = global as typeof globalThis & {
-        _milvusClient?: MilvusClient
+        _milvusClient?: MilvusClientType
       }
 
       if (!globalWithMilvus._milvusClient) {

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { isAllowedFormat } from '@/lib/upload'
-import { isMilvusConfigured, getCollectionName, calculateVectorDimension } from '@/lib/milvus'
+import { isMilvusConfigured } from '@/lib/milvus'
 import getMilvusClient from '@/lib/milvus'
-import { DataType } from '@zilliz/milvus2-sdk-node'
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
@@ -52,6 +51,9 @@ export async function POST(req: NextRequest) {
 
     // Get Milvus client
     const milvusClient = await getMilvusClient()
+    
+    // Dynamic import to avoid build-time issues
+    const { DataType } = await import('@zilliz/milvus2-sdk-node')
 
     // Ensure temporary collection exists
     const collectionExists = await milvusClient.hasCollection({

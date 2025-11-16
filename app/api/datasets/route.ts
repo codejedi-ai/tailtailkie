@@ -5,7 +5,6 @@ import { getOrCreateUser } from '@/lib/auth'
 import { CreateDatasetSchema } from '@/lib/types'
 import { isMilvusConfigured, getCollectionName, calculateVectorDimension } from '@/lib/milvus'
 import getMilvusClient from '@/lib/milvus'
-import { DataType } from '@zilliz/milvus2-sdk-node'
 import path from 'path'
 
 // Force dynamic rendering for this route
@@ -137,6 +136,9 @@ export async function POST(req: NextRequest) {
 
     // Get Milvus client
     const milvusClient = await getMilvusClient()
+    
+    // Dynamic import to avoid build-time issues
+    const { DataType } = await import('@zilliz/milvus2-sdk-node')
 
     // Calculate total size from tensor metadata
     let totalSize = 0

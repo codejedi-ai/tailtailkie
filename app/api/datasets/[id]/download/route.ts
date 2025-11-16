@@ -8,6 +8,8 @@ import getMilvusClient from '@/lib/milvus'
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 // GET /api/datasets/[id]/download - Download dataset as zip
 export async function GET(
