@@ -3,12 +3,13 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ClerkProvider } from '@clerk/nextjs'
+import { LayoutWrapper } from '@/components/LayoutWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Kaggle for Tensors - Pure ML Dataset Platform',
-  description: 'Upload and share structured tensor datasets for machine learning',
+  title: 'TensorSet - Pure ML Dataset Platform',
+  description: 'Upload and share structured tensor datasets for machine learning. The home of Kaggle for Tensors.',
 }
 
 export default async function RootLayout({
@@ -32,7 +33,9 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
           </ThemeProvider>
         </body>
       </html>

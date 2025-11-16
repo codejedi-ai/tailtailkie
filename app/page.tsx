@@ -77,8 +77,9 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-16 relative">
           <div className="text-center max-w-4xl mx-auto mb-12">
             <h1 className="text-6xl font-black mb-6 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent animate-pulse">
-              Kaggle for Tensors
+              TensorSet
             </h1>
+            <p className="text-lg text-cyber-light/60 mb-2">Kaggle for Tensors</p>
             <p className="text-xl text-cyber-light/80 mb-8">
               Upload and share pure tensor datasets. No data engineering needed - just vectors ready for training.
             </p>
@@ -205,7 +206,7 @@ export default function HomePage() {
       {/* Features Section */}
       <div className="border-t border-cyber-blue/20 py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-cyber-light mb-12">Why Kaggle for Tensors?</h2>
+          <h2 className="text-3xl font-bold text-center text-cyber-light mb-12">Why TensorSet?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
