@@ -29,7 +29,27 @@ export async function GET(req: NextRequest) {
     }
 
     if (userId) {
-      where.userId = userId
+      // userId could be a Clerk ID (starts with "user_") or MongoDB ObjectID
+      // If it's a Clerk ID, look up the user first
+      if (userId.startsWith('user_')) {
+        const user = await prisma.user.findUnique({
+          where: { clerkId: userId },
+          select: { id: true },
+        })
+        if (!user) {
+          // User not found, return empty result
+          return NextResponse.json({
+            datasets: [],
+            total: 0,
+            limit,
+            offset,
+          })
+        }
+        where.userId = user.id
+      } else {
+        // Assume it's already a MongoDB ObjectID
+        where.userId = userId
+      }
       delete where.isPublic // Allow private datasets for user's own datasets
     }
 
