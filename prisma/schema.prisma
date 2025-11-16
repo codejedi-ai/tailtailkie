@@ -6,12 +6,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   clerkId   String   @unique
   email     String   @unique
   username  String?  @unique
@@ -23,10 +23,10 @@ model User {
 }
 
 model Dataset {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
-  userId      String
+  userId      String   @db.ObjectId
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Metadata
@@ -50,8 +50,8 @@ model Dataset {
 }
 
 model Tensor {
-  id          String   @id @default(cuid())
-  datasetId   String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  datasetId   String   @db.ObjectId
   dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
   // File info
@@ -71,8 +71,8 @@ model Tensor {
 }
 
 model Dimension {
-  id          String   @id @default(cuid())
-  tensorId    String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tensorId    String   @db.ObjectId
   tensor      Tensor   @relation(fields: [tensorId], references: [id], onDelete: Cascade)
 
   index       Int      // 0, 1, 2, etc.
@@ -85,10 +85,10 @@ model Dimension {
 }
 
 model Download {
-  id         String   @id @default(cuid())
-  userId     String
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  datasetId  String
+  datasetId  String   @db.ObjectId
   dataset    Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
   createdAt  DateTime @default(now())
