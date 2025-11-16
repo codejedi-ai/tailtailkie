@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { Search, Upload, Database, TrendingUp, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
-export const dynamic = 'force-dynamic'
 
 interface Dataset {
   id: string
@@ -31,14 +30,25 @@ interface Dataset {
 }
 
 export default function HomePage() {
-  const { isSignedIn, user } = useUser()
+  const { isSignedIn, user, isLoaded } = useUser()
+  const router = useRouter()
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Redirect authenticated users to dashboard
   useEffect(() => {
-    fetchDatasets()
-  }, [])
+    if (isLoaded && isSignedIn) {
+      router.push('/user/datasets')
+    }
+  }, [isLoaded, isSignedIn, router])
+
+  useEffect(() => {
+    // Only fetch datasets if user is not signed in (for landing page)
+    if (isLoaded && !isSignedIn) {
+      fetchDatasets()
+    }
+  }, [isLoaded, isSignedIn])
 
   async function fetchDatasets(search?: string) {
     setLoading(true)
@@ -70,6 +80,29 @@ export default function HomePage() {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
   }
 
+  // Show loading state while checking auth
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-cyber-light/60">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // If signed in, redirect will happen, but show loading during redirect
+  if (isSignedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-cyber-light/60">Redirecting to dashboard...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Landing page for non-authenticated users
   return (
     <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark">
       {/* Hero Section */}

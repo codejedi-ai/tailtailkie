@@ -7,8 +7,6 @@ import Link from 'next/link'
 import { Database, Download, TrendingUp, Edit, Trash2, Plus, Loader2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export const dynamic = 'force-dynamic'
-
 interface Dataset {
   id: string
   name: string

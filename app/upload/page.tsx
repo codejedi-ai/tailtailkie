@@ -6,8 +6,6 @@ import { useUser } from '@clerk/nextjs'
 import { Upload, X, Plus, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export const dynamic = 'force-dynamic'
-
 interface UploadedFile {
   file: File
   fileName: string

@@ -5,8 +5,6 @@ import Link from 'next/link'
 import { Search, Filter, Download, TrendingUp, Database } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export const dynamic = 'force-dynamic'
-
 interface Dataset {
   id: string
   name: string

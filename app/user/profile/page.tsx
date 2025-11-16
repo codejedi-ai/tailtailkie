@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import { User, Mail, Calendar, Database, Download, Eye, Loader2, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export const dynamic = 'force-dynamic'
-
 interface UserStats {
   totalDatasets: number
   totalDownloads: number

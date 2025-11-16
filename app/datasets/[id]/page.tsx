@@ -7,8 +7,6 @@ import Link from 'next/link'
 import { Download, Eye, TrendingUp, Calendar, User, Database, Edit, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export const dynamic = 'force-dynamic'
-
 interface Dimension {
   index: number
   size: number

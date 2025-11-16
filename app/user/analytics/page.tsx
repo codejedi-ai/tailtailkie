@@ -5,8 +5,6 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { TrendingUp, Download, Eye, Database, Calendar, Loader2 } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
-
 interface Analytics {
   datasets: Array<{
     id: string
