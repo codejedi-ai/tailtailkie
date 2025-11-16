@@ -6,7 +6,6 @@ import {
   Home,
   Database,
   Upload,
-  User,
   FolderOpen,
   ChevronLeft,
   ChevronRight,
@@ -28,7 +27,6 @@ const navItems: NavItem[] = [
   { name: 'Browse Datasets', href: '/datasets', icon: Database },
   { name: 'Upload', href: '/upload', icon: Upload },
   { name: 'My Datasets', href: '/user/datasets', icon: FolderOpen },
-  { name: 'Profile', href: '/user/profile', icon: User },
   { name: 'Analytics', href: '/user/analytics', icon: TrendingUp },
 ]
 
