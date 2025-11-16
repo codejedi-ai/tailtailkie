@@ -16,17 +16,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const showSidebar = isLoaded && isSignedIn && !isAuthPage
 
   return (
-    <>
+    <div className="relative">
       {showSidebar && <Sidebar />}
-      <div
-        className="transition-all duration-300"
+      <main
+        className="transition-all duration-300 min-h-screen"
         style={{
           marginLeft: showSidebar ? (collapsed ? '80px' : '256px') : '0',
         }}
       >
         {children}
-      </div>
-    </>
+      </main>
+    </div>
   )
 }
 

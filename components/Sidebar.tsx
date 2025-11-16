@@ -44,6 +44,9 @@ export function Sidebar() {
         'fixed left-0 top-0 h-screen pixel-bg border-r-4 border-pixel-green backdrop-blur-md z-50 transition-all duration-300 flex flex-col',
         collapsed ? 'w-20' : 'w-64'
       )}
+      style={{
+        boxSizing: 'border-box',
+      }}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-pixel-green/30 pixel-border-purple">
