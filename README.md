@@ -9,7 +9,7 @@
 
 **Kaggle for Tensors - The Next Evolution of Programming**
 
-*Pioneering Tensor-Oriented Programming: Where OOP meets the vector-first world of LLMs*
+*Pioneering Tensor-Oriented Programming: Where OOP meets the vector-first world of brain-inspired AI*
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
@@ -23,7 +23,7 @@
 
 ### 🚀 The Next Evolution: Tensor-Oriented Programming
 
-With the explosive growth of LLMs, embeddings, and vector representations, we're witnessing a fundamental shift:
+With the explosive growth of brain-inspired AI models, neural embeddings, and vector representations, we're witnessing a fundamental shift:
 
 ```
 Object-Oriented Programming → Tensor-Oriented Programming
@@ -31,7 +31,7 @@ Object-Oriented Programming → Tensor-Oriented Programming
 ```
 
 **Why this shift matters:**
-- **LLMs everywhere** - Language models have made vector representations ubiquitous
+- **Neural computation everywhere** - Brain-inspired models have made vector representations ubiquitous
 - **Everything is encoded** - Text, images, audio, video - all represented as tensors
 - **Vector databases** - The new standard for data storage and retrieval
 - **Embeddings as APIs** - Neural networks consume and produce tensors, not strings
@@ -44,7 +44,7 @@ TensorSet is purpose-built for this tensor-first world. Unlike traditional platf
 - **Semantic Dimension Annotations** - Each dimension is labeled (batch, channels, height, width, embeddings)
 - **Training-Ready** - Load and start training immediately with PyTorch, TensorFlow, or NumPy
 - **Vector-First** - Embeddings and encodings are first-class citizens, not afterthoughts
-- **Paradigm Aligned** - Built for the age of LLMs and neural representation learning
+- **Paradigm Aligned** - Built for the age of brain-inspired AI and neural representation learning
 
 ## ✨ Features
 

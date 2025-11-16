@@ -87,7 +87,7 @@ export default function HomePage() {
               Upload and share pure tensor datasets. No data engineering needed - just vectors ready for training.
             </p>
             <p className="text-base text-cyber-light/70 max-w-3xl mx-auto mb-8">
-              As LLMs, embeddings, and vector representations dominate modern computing, we're witnessing the shift from
+              As brain-inspired AI models, embeddings, and vector representations dominate modern computing, we're witnessing the shift from
               <span className="text-cyber-blue font-semibold"> Object-Oriented Programming</span> to
               <span className="text-cyber-purple font-semibold"> Tensor-Oriented Programming</span>.
               TensorSet is the foundation of this new paradigm - where everything is vectors, and data is already ML-ready.
@@ -220,7 +220,7 @@ export default function HomePage() {
               The Tensor-Oriented Programming Paradigm
             </h2>
             <p className="text-lg text-cyber-light/80 mb-8">
-              With the explosive growth of LLMs, embeddings, and vector databases, we're experiencing a fundamental shift in how we represent and process information.
+              With the explosive growth of brain-inspired AI models, neural embeddings, and vector databases, we're experiencing a fundamental shift in how we represent and process information.
             </p>
             <div className="bg-black/50 border border-cyber-purple/30 rounded-lg p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -245,7 +245,7 @@ export default function HomePage() {
               </div>
               <p className="text-cyber-light/70 text-sm">
                 Every piece of data - text, images, audio, video - is now represented as vectors.
-                LLMs have made tensor representation the default. TensorSet embraces this reality.
+                Brain-inspired AI models have made tensor representation the default. TensorSet embraces this reality.
               </p>
             </div>
           </div>
@@ -260,7 +260,7 @@ export default function HomePage() {
               <h3 className="text-xl font-bold text-cyber-light mb-2">Pure Tensors Only</h3>
               <p className="text-cyber-light/70">
                 No messy CSV files or unstructured data. Everything is already in tensor format, ready for PyTorch or NumPy.
-                This is how data should exist in the age of LLMs.
+                This is how data should exist in the age of brain-inspired AI.
               </p>
             </div>
 
