@@ -80,8 +80,17 @@ export default function HomePage() {
               TensorSet
             </h1>
             <p className="text-lg text-cyber-light/60 mb-2">Kaggle for Tensors</p>
-            <p className="text-xl text-cyber-light/80 mb-8">
+            <p className="text-2xl font-bold text-cyber-pink mb-4">
+              The Next Evolution of Programming
+            </p>
+            <p className="text-xl text-cyber-light/80 mb-4">
               Upload and share pure tensor datasets. No data engineering needed - just vectors ready for training.
+            </p>
+            <p className="text-base text-cyber-light/70 max-w-3xl mx-auto mb-8">
+              As LLMs, embeddings, and vector representations dominate modern computing, we're witnessing the shift from
+              <span className="text-cyber-blue font-semibold"> Object-Oriented Programming</span> to
+              <span className="text-cyber-purple font-semibold"> Tensor-Oriented Programming</span>.
+              TensorSet is the foundation of this new paradigm - where everything is vectors, and data is already ML-ready.
             </p>
 
             <div className="flex gap-4 justify-center">
@@ -203,9 +212,44 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Paradigm Shift Section */}
       <div className="border-t border-cyber-blue/20 py-16">
         <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h2 className="text-4xl font-bold text-cyber-light mb-6">
+              The Tensor-Oriented Programming Paradigm
+            </h2>
+            <p className="text-lg text-cyber-light/80 mb-8">
+              With the explosive growth of LLMs, embeddings, and vector databases, we're experiencing a fundamental shift in how we represent and process information.
+            </p>
+            <div className="bg-black/50 border border-cyber-purple/30 rounded-lg p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-cyber-light/50 mb-4 line-through">Object-Oriented Era</h3>
+                  <ul className="space-y-2 text-cyber-light/60">
+                    <li>• Classes and objects</li>
+                    <li>• String-based data</li>
+                    <li>• Manual feature engineering</li>
+                    <li>• CSV files and databases</li>
+                  </ul>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-cyber-pink mb-4">Tensor-Oriented Future</h3>
+                  <ul className="space-y-2 text-cyber-light">
+                    <li>• <span className="text-cyber-blue">Vectors and embeddings</span></li>
+                    <li>• <span className="text-cyber-purple">Everything encoded</span></li>
+                    <li>• <span className="text-cyber-green">Ready for neural networks</span></li>
+                    <li>• <span className="text-cyber-pink">Pure tensor datasets</span></li>
+                  </ul>
+                </div>
+              </div>
+              <p className="text-cyber-light/70 text-sm">
+                Every piece of data - text, images, audio, video - is now represented as vectors.
+                LLMs have made tensor representation the default. TensorSet embraces this reality.
+              </p>
+            </div>
+          </div>
+
           <h2 className="text-3xl font-bold text-center text-cyber-light mb-12">Why TensorSet?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -216,6 +260,7 @@ export default function HomePage() {
               <h3 className="text-xl font-bold text-cyber-light mb-2">Pure Tensors Only</h3>
               <p className="text-cyber-light/70">
                 No messy CSV files or unstructured data. Everything is already in tensor format, ready for PyTorch or NumPy.
+                This is how data should exist in the age of LLMs.
               </p>
             </div>
 
@@ -225,7 +270,8 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-cyber-light mb-2">Semantic Dimensions</h3>
               <p className="text-cyber-light/70">
-                Each dimension is annotated with its meaning - batch size, channels, height, width, etc.
+                Each dimension is annotated with its meaning - batch size, channels, height, width, embedding dimensions.
+                Context is preserved in the tensor metadata.
               </p>
             </div>
 
@@ -233,9 +279,10 @@ export default function HomePage() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-cyber-purple to-cyber-green flex items-center justify-center">
                 <Upload className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-cyber-light mb-2">Easy Upload</h3>
+              <h3 className="text-xl font-bold text-cyber-light mb-2">Vector-First World</h3>
               <p className="text-cyber-light/70">
-                Upload .pt, .npy, .safetensors, or .h5 files. Define shapes and dimensions in a simple form.
+                Upload .pt, .npy, .safetensors, or .h5 files. Your embeddings, encodings, and representations
+                are first-class citizens, not afterthoughts.
               </p>
             </div>
           </div>

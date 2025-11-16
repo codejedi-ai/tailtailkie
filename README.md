@@ -1,4 +1,4 @@
-# Kaggle for Tensors
+# TensorSet
 
 <div align="center">
 
@@ -7,7 +7,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)
 ![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748.svg)
 
-**A modern platform for sharing structured tensor datasets for machine learning**
+**Kaggle for Tensors - The Next Evolution of Programming**
+
+*Pioneering Tensor-Oriented Programming: Where OOP meets the vector-first world of LLMs*
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
@@ -15,16 +17,34 @@
 
 ---
 
-## 🎯 What is Kaggle for Tensors?
+## 🎯 What is TensorSet?
 
-Kaggle for Tensors is a specialized dataset sharing platform for the machine learning community. Unlike traditional platforms that deal with CSV files and unstructured data requiring extensive preprocessing, **Kaggle for Tensors only accepts pure tensor formats** that are ready for training.
+**TensorSet** (Kaggle for Tensors) is more than a dataset platform - it's the foundation of a new programming paradigm.
 
-### Why Kaggle for Tensors?
+### 🚀 The Next Evolution: Tensor-Oriented Programming
 
-- **No Data Engineering Required** - All datasets are already in tensor format (.pt, .npy, .safetensors, .h5)
-- **Semantic Dimension Annotations** - Each tensor dimension is labeled with its meaning (batch, channels, height, width, etc.)
+With the explosive growth of LLMs, embeddings, and vector representations, we're witnessing a fundamental shift:
+
+```
+Object-Oriented Programming → Tensor-Oriented Programming
+         (OOP)                           (TOP)
+```
+
+**Why this shift matters:**
+- **LLMs everywhere** - Language models have made vector representations ubiquitous
+- **Everything is encoded** - Text, images, audio, video - all represented as tensors
+- **Vector databases** - The new standard for data storage and retrieval
+- **Embeddings as APIs** - Neural networks consume and produce tensors, not strings
+
+TensorSet is purpose-built for this tensor-first world. Unlike traditional platforms dealing with CSV files and unstructured data, **TensorSet only accepts pure tensor formats** that are ready for neural networks.
+
+### Why TensorSet?
+
+- **No Data Engineering Required** - Datasets are already in tensor format (.pt, .npy, .safetensors, .h5)
+- **Semantic Dimension Annotations** - Each dimension is labeled (batch, channels, height, width, embeddings)
 - **Training-Ready** - Load and start training immediately with PyTorch, TensorFlow, or NumPy
-- **ML-First** - Built specifically for deep learning practitioners
+- **Vector-First** - Embeddings and encodings are first-class citizens, not afterthoughts
+- **Paradigm Aligned** - Built for the age of LLMs and neural representation learning
 
 ## ✨ Features
 
