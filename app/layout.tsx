@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'TensorStore - Pure ML Dataset Platform',
   description: 'Upload and share structured tensor datasets for machine learning. The home of Kaggle for Tensors.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default async function RootLayout({

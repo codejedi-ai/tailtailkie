@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
-import { User, Mail, Calendar, Database, Download, Eye, Loader2 } from 'lucide-react'
+import { User, Mail, Calendar, Database, Download, Eye, Loader2, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface UserStats {
@@ -15,6 +15,7 @@ interface UserStats {
 
 export default function ProfilePage() {
   const { user, isLoaded, isSignedIn } = useUser()
+  const { signOut } = useClerk()
   const router = useRouter()
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -112,13 +113,24 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <Button
-              onClick={() => window.open(user?.primaryEmailAddress?.emailAddress ? `mailto:${user.primaryEmailAddress.emailAddress}` : '#')}
-              variant="outline"
-              className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10"
-            >
-              Edit Profile
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => window.open(user?.primaryEmailAddress?.emailAddress ? `mailto:${user.primaryEmailAddress.emailAddress}` : '#')}
+                variant="outline"
+                className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10"
+              >
+                Edit Profile
+              </Button>
+
+              <Button
+                onClick={() => signOut({ redirectUrl: '/' })}
+                variant="outline"
+                className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
 

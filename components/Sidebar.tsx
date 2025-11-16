@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { UserButton } from '@clerk/nextjs'
@@ -16,6 +15,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSidebar } from '@/contexts/SidebarContext'
 
 interface NavItem {
   name: string
@@ -33,13 +33,13 @@ const navItems: NavItem[] = [
 ]
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+  const { collapsed, setCollapsed } = useSidebar()
   const pathname = usePathname()
 
   return (
     <div
       className={cn(
-        'fixed left-0 top-0 h-screen bg-black/95 border-r border-cyber-blue/30 backdrop-blur-md z-50 transition-all duration-300',
+        'fixed left-0 top-0 h-screen bg-black/95 border-r border-cyber-blue/30 backdrop-blur-md z-50 transition-all duration-300 flex flex-col',
         collapsed ? 'w-20' : 'w-64'
       )}
     >
@@ -62,7 +62,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href
           const Icon = item.icon
@@ -87,8 +87,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User Section */}
-      <div className="p-4 border-t border-cyber-blue/30">
+      {/* User Section - Fixed to bottom */}
+      <div className="mt-auto p-4 border-t border-cyber-blue/30">
         <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
           <UserButton
             afterSignOutUrl="/"
