@@ -6,6 +6,17 @@ This folder contains a peer-to-peer implementation that embeds Tailscale directl
 - No host Tailscale app required.
 - Each binary is its own Tailnet node.
 
+## Prerequisites
+
+Before running bridges, complete the setup in **PREREQUISITES.md**:
+
+- Go 1.25+
+- Tailscale account with auth keys
+- Local agent with HTTP endpoint
+- Ports 8001, 8080 available
+
+See [PREREQUISITES.md](PREREQUISITES.md) for detailed setup instructions.
+
 ## Components
 
 - `bridge`: per-host peer bridge node (`bridge-alpha` by default)
