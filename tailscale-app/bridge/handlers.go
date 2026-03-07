@@ -56,6 +56,32 @@ func makeInboundHandler(bridgeName, localAgentURL string, localClient *http.Clie
 	}
 }
 
+func makeAgentsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		if discoverySvc == nil {
+			http.Error(w, "discovery service not initialized", http.StatusInternalServerError)
+			return
+		}
+
+		agents := discoverySvc.GetOnlineAgents()
+		w.Header().Set("Content-Type", "application/json")
+		
+		response := map[string]interface{}{
+			"agents": agents,
+			"count":  len(agents),
+		}
+		
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			log.Printf("[agents] failed to encode response: %v", err)
+		}
+	}
+}
+
 func runOutboundServer(localListen, bridgeName string, peerInboundPort int, tailnetClient *http.Client) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/send", func(w http.ResponseWriter, r *http.Request) {

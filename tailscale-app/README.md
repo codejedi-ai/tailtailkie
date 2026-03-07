@@ -6,6 +6,31 @@ This folder contains a peer-to-peer implementation that embeds Tailscale directl
 - No host Tailscale app required.
 - Each binary is its own Tailnet node.
 - Configuration stored in `~/.tailtalkie/config.json`
+- Auto-discovers agents and gateways on your tailnet
+
+## Quick Install (Linux)
+
+```bash
+curl -fsSL https://openclaw.ai/install.sh | sudo bash
+```
+
+This will:
+- Install Go (if not present)
+- Build and install the bridge
+- Create systemd service
+- Set up configuration directory
+
+After installation:
+```bash
+# Configure your bridge
+sudo walkie-talkie-bridge init
+
+# Start the service
+sudo systemctl start walkie-talkie-bridge
+
+# View status
+sudo systemctl status walkie-talkie-bridge
+```
 
 ## Prerequisites
 
@@ -130,6 +155,45 @@ EOF
 | `bridge init` | Interactive configuration setup |
 | `bridge run` | Start the bridge (default) |
 | `bridge help` | Show help message |
+
+## Agent Discovery
+
+The bridge automatically discovers agents and gateways on your tailnet.
+
+### Discover Agents
+
+```bash
+# Query the agents endpoint on any bridge
+curl http://<bridge-host>:8001/agents
+```
+
+Response:
+```json
+{
+  "agents": [
+    {
+      "name": "bridge-alpha",
+      "hostname": "bridge-alpha.tailnet.ts.net",
+      "ip": "100.64.0.1",
+      "online": true,
+      "last_seen": "2026-03-07T12:00:00Z",
+      "gateways": [
+        {"port": 8001, "protocol": "tcp", "service": "bridge-inbound"},
+        {"port": 8080, "protocol": "tcp", "service": "bridge-local"},
+        {"port": 9090, "protocol": "tcp", "service": "agent-api"}
+      ]
+    }
+  ],
+  "count": 1
+}
+```
+
+### Discovery Features
+
+- **Auto-detection**: Scans tailnet every 30 seconds
+- **Gateway scanning**: Detects open ports on each agent
+- **Health monitoring**: Tracks online/offline status
+- **Stale cleanup**: Removes agents offline > 5 minutes
 
 ## Notes
 

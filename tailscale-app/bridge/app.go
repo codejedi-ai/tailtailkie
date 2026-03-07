@@ -9,6 +9,8 @@ import (
 	"tailscale.com/tsnet"
 )
 
+var discoverySvc *DiscoveryService
+
 func runBridge() {
 	cfg, err := loadConfig()
 	if err != nil {
@@ -21,6 +23,14 @@ func runBridge() {
 		AuthKey:  cfg.AuthKey,
 	}
 	defer srv.Close()
+
+	// Initialize discovery service
+	discoverySvc, err = NewDiscoveryService(srv)
+	if err != nil {
+		log.Fatalf("Failed to create discovery service: %v", err)
+	}
+	// Start discovery with 30-second interval
+	discoverySvc.Start(30 * time.Second)
 
 	tailnetClient := tsHTTPClient(srv, 20*time.Second)
 	localClient := &http.Client{Timeout: 20 * time.Second}
@@ -35,6 +45,7 @@ func runBridge() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/inbound", makeInboundHandler(cfg.BridgeName, cfg.LocalAgentURL, localClient))
+	mux.HandleFunc("/agents", makeAgentsHandler())
 
 	httpSrv := &http.Server{
 		Handler:      mux,
@@ -44,6 +55,7 @@ func runBridge() {
 	}
 
 	log.Printf("bridge node %q listening on tailnet :%d (state=%s)", cfg.BridgeName, cfg.InboundPort, cfg.StateDir)
+	log.Printf("discovery service started - agents available at /agents endpoint")
 	if err := httpSrv.Serve(ln); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("bridge serve failed: %v", err)
 	}
