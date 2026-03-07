@@ -47,6 +47,30 @@ esac
 
 echo -e "${YELLOW}Detected architecture: $ARCH ($GOARCH)${NC}"
 
+# Check if git is installed
+if ! command -v git &> /dev/null; then
+    echo -e "${YELLOW}Git not found. Installing git...${NC}"
+    
+    # Detect package manager
+    if command -v apt-get &> /dev/null; then
+        apt-get update -qq
+        apt-get install -y -qq git
+    elif command -v yum &> /dev/null; then
+        yum install -y -q git
+    elif command -v dnf &> /dev/null; then
+        dnf install -y -q git
+    elif command -v apk &> /dev/null; then
+        apk add --no-cache git
+    elif command -v zypper &> /dev/null; then
+        zypper install -y git
+    else
+        echo -e "${RED}Error: Could not detect package manager. Please install git manually.${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✓ Git installed successfully${NC}"
+fi
+
 # Check if Go is installed
 if ! command -v go &> /dev/null; then
     echo -e "${YELLOW}Go not found. Installing Go...${NC}"
