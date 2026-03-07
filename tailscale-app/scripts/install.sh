@@ -162,13 +162,18 @@ fi
 # Support both legacy layout (/opt/walkie-talkie/tailtailkie)
 # and normalized layout (/opt/walkie-talkie as git root).
 REPO_DIR=""
-if [ -d "$INSTALL_DIR/.git" ]; then
+VALID_INSTALL=false
+
+# Check for valid installation (must have .git AND tailscale-app directory)
+if [ -d "$INSTALL_DIR/.git" ] && [ -d "$INSTALL_DIR/tailscale-app" ]; then
     REPO_DIR="$INSTALL_DIR"
-elif [ -d "$LEGACY_REPO_DIR/.git" ]; then
+    VALID_INSTALL=true
+elif [ -d "$LEGACY_REPO_DIR/.git" ] && [ -d "$LEGACY_REPO_DIR/tailscale-app" ]; then
     REPO_DIR="$LEGACY_REPO_DIR"
+    VALID_INSTALL=true
 fi
 
-if [ -n "$REPO_DIR" ]; then
+if [ "$VALID_INSTALL" = true ]; then
     echo -e "${YELLOW}Updating repository...${NC}"
     cd "$REPO_DIR"
     git fetch --quiet
