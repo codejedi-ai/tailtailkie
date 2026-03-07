@@ -2,7 +2,7 @@
 set -e
 
 # Walkie-Talkie Bridge Uninstall Script
-# Usage: curl -fsSL https://openclaw.ai/uninstall.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/codejedi-ai/tailtailkie/main/tailscale-app/scripts/uninstall.sh | sudo bash
 
 # Colors
 RED='\033[0;31m'

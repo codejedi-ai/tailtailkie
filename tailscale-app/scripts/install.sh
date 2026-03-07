@@ -3,7 +3,7 @@ set -e
 
 # Walkie-Talkie Bridge Installation Script
 # Installs the bridge service on Linux systems
-# Usage: curl -fsSL https://openclaw.ai/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/codejedi-ai/tailtailkie/main/tailscale-app/scripts/install.sh | sudo bash
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO_URL="https://github.com/codejedi-ai/Kaggle-For-Tensors.git"
+REPO_URL="https://github.com/codejedi-ai/tailtailkie.git"
 INSTALL_DIR="/opt/walkie-talkie"
 SYSTEMD_SERVICE="walkie-talkie-bridge.service"
 CONFIG_DIR="$HOME/.tailtalkie"

@@ -10,8 +10,10 @@ This folder contains a peer-to-peer implementation that embeds Tailscale directl
 
 ## Quick Install (Linux)
 
+One-line installation:
+
 ```bash
-curl -fsSL https://openclaw.ai/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/codejedi-ai/tailtailkie/main/tailscale-app/scripts/install.sh | sudo bash
 ```
 
 This will:
