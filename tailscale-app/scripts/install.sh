@@ -103,16 +103,25 @@ echo -e "${GREEN}✓ Found $GO_VERSION${NC}"
 echo -e "${YELLOW}Creating installation directory...${NC}"
 mkdir -p "$INSTALL_DIR"
 
+# Check if this is an update or fresh install
+IS_UPDATE=false
+if [ -f "$BIN_DIR/walkie-talkie-bridge" ]; then
+    IS_UPDATE=true
+    CURRENT_VERSION=$("$BIN_DIR/walkie-talkie-bridge" version 2>/dev/null || echo "unknown")
+    echo -e "${YELLOW}Existing installation detected (version: $CURRENT_VERSION)${NC}"
+fi
+
 # Clone or update repository
 if [ -d "$INSTALL_DIR/tailtailkie" ]; then
-    echo -e "${YELLOW}Updating existing installation...${NC}"
+    echo -e "${YELLOW}Updating repository...${NC}"
     cd "$INSTALL_DIR/tailtailkie"
-    git pull --quiet
+    git fetch --quiet
+    git reset --hard origin/main --quiet
 else
     echo -e "${YELLOW}Cloning repository...${NC}"
     cd /tmp
     rm -rf tailtailkie  # Clean up any failed previous attempts
-    git clone --depth 1 "$REPO_URL" --quiet
+    git clone "$REPO_URL" --quiet
     mv tailtailkie "$INSTALL_DIR"
 fi
 
@@ -127,6 +136,13 @@ if [ ! -f "$BIN_DIR/walkie-talkie-bridge" ]; then
 fi
 
 echo -e "${GREEN}✓ Bridge built successfully${NC}"
+
+# Restart service if it was running (update scenario)
+if [ "$IS_UPDATE" = true ]; then
+    echo -e "${YELLOW}Restarting service with new version...${NC}"
+    systemctl restart $SYSTEMD_SERVICE 2>/dev/null || true
+    echo -e "${GREEN}✓ Service updated and restarted${NC}"
+fi
 
 # Create config directory
 echo -e "${YELLOW}Setting up configuration...${NC}"

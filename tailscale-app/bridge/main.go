@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+const Version = "0.2.0"
+
 func main() {
 	if len(os.Args) < 2 {
 		// Default: run bridge
@@ -22,6 +24,8 @@ func main() {
 		}
 	case "run":
 		runBridge()
+	case "version":
+		fmt.Printf("walkie-talkie-bridge version %s\n", Version)
 	case "help":
 		printUsage()
 	default:
@@ -33,10 +37,11 @@ func main() {
 
 func printUsage() {
 	fmt.Println("Walkie-Talkie Bridge - Peer-to-peer agent communication")
-	fmt.Println()
+	fmt.Printf("Version: %s\n\n", Version)
 	fmt.Println("Usage:")
 	fmt.Println("  bridge init    Initialize configuration interactively")
 	fmt.Println("  bridge run     Start the bridge (default)")
+	fmt.Println("  bridge version Show version information")
 	fmt.Println("  bridge help    Show this help message")
 	fmt.Println()
 	fmt.Println("Configuration:")
@@ -45,6 +50,7 @@ func printUsage() {
 	fmt.Println("Examples:")
 	fmt.Println("  bridge init              # Interactive setup")
 	fmt.Println("  bridge run               # Start bridge with config")
+	fmt.Println("  bridge version           # Show version")
 	fmt.Println("  go run ./bridge init     # Initialize via go run")
 	fmt.Println("  go run ./bridge run      # Run via go run")
 }
