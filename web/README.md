@@ -1,235 +1,169 @@
-# TensorStore
+# Walkie-Talkie for Bots
 
-A monorepo for TensorStore - a platform for managing and sharing tensor datasets with vector similarity search capabilities.
+A peer-to-peer communication system for AI agents using Tailscale tsnet bridges.
 
 ## Architecture
 
-This is a monorepo containing:
+This system enables direct agent-to-agent communication through bridge nodes:
 
-- **Backend** (`db-flask-backend/`) - Flask REST API for managing datasets, MongoDB and Milvus integration
-- **Frontend** (`Kaggle-For-Tensors/`) - Next.js frontend that acts as a proxy to the backend API
+- **Bridges** (`tailscale-app/bridge/`) - Go tsnet nodes that handle peer routing
+- **Frontend** (`web/`) - Dashboard for monitoring bridge connections and messages
 
-### Backend (Flask)
+### Bridge Network
 
-The Flask backend handles all database operations:
-- MongoDB for metadata storage
-- Milvus for vector storage and similarity search
+Each bridge is a peer on the Tailnet:
+- No central gateway - direct peer-to-peer routing
+- Each binary is its own Tailnet node
+- Uses tsnet for embedded Tailscale functionality
 
-**Important**: The backend does NOT use CORS. The frontend proxies all requests to the backend.
+**Important**: Bridges handle all networking. Agents communicate via local HTTP to their bridge.
 
-### Frontend (Next.js)
+### Message Flow
 
-The Next.js frontend is strictly a proxy layer:
-- All API routes (`/app/api/*`) forward requests to the Flask backend
-- No direct database connections
+```
+Agent A -> Bridge A (/send)
+Bridge A -> Bridge B (/inbound) [Tailnet]
+Bridge B -> Agent B (LOCAL_AGENT_URL)
+Agent B -> Bridge B -> Bridge A -> Agent A
+```
 
 ## Project Structure
 
 ```
-TensorStore/
-├── db-flask-backend/          # Flask backend API
-│   ├── src/
-│   │   └── im_db_backend/     # Main application code
-│   ├── requirements.in        # Python dependencies
-│   └── ...
-├── Kaggle-For-Tensors/        # Next.js frontend (proxy)
+Kaggle-For-Tensors/
+├── tailscale-app/           # Bridge application
+│   ├── bridge/              # tsnet bridge node
+│   ├── protocol/            # Message envelope schema
+│   ├── docs/                # Architecture docs
+│   └── state/               # Persistent node identity
+├── web/                     # Dashboard frontend
 │   ├── app/
-│   │   └── api/              # API routes (proxies to backend)
-│   ├── lib/                   # Frontend utilities
-│   └── ...
-├── docker/                    # Docker configurations
-│   ├── backend.Dockerfile
-│   └── database.Dockerfile
-├── kubernetes/                # Kubernetes configurations
-│   ├── backend-chart/         # Helm chart for backend
-│   └── kind/                  # Local Kubernetes configs
-└── README.md                  # This file
+│   └── components/
+└── engineering-notebook/    # Change logs
 ```
 
 ## Quick Start
 
-### Backend Setup
+### Bridge Setup
 
-1. Navigate to backend:
+1. Navigate to bridge:
    ```bash
-   cd db-flask-backend
+   cd tailscale-app
    ```
 
-2. Create virtual environment:
+2. Start bridge on Host A:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   TS_AUTHKEY=tskey-auth-bridge-a \
+   BRIDGE_NAME=bridge-alpha \
+   TSNET_STATE_DIR=./state/bridge-alpha \
+   PEER_BRIDGE_INBOUND_PORT=8001 \
+   LOCAL_AGENT_URL=http://127.0.0.1:9090/api \
+   go run ./bridge
    ```
 
-3. Install dependencies:
+3. Start bridge on Host B:
    ```bash
-   pip install -r requirements.txt
+   TS_AUTHKEY=tskey-auth-bridge-b \
+   BRIDGE_NAME=bridge-beta \
+   TSNET_STATE_DIR=./state/bridge-beta \
+   PEER_BRIDGE_INBOUND_PORT=8001 \
+   LOCAL_AGENT_URL=http://127.0.0.1:9090/api \
+   go run ./bridge
    ```
 
-4. Set environment variables:
-   ```bash
-   export MONGODB_URI="mongodb://localhost:27017/tensorstore"
-   export MILVUS_URI="https://your-instance.milvus.io"
-   export MILVUS_TOKEN="your-token"
-   ```
+### Send Messages
 
-5. Run the backend:
-   ```bash
-   python manage.py run
-   # or
-   gunicorn -c src/im_db_backend/app/gunicorn.conf.py src.im_db_backend.app.app:application
-   ```
-
-The backend will be available at `http://localhost:5000/service/api`
-
-### Frontend Setup
-
-1. Navigate to frontend:
-   ```bash
-   cd Kaggle-For-Tensors
-   ```
-
-2. Install dependencies:
-   ```bash
-   pnpm install
-   # or
-   npm install
-   ```
-
-3. Set environment variables:
-   ```bash
-   export FLASK_API_URL="http://localhost:5000/service/api"
-   # or for production
-   export NEXT_PUBLIC_FLASK_API_URL="https://your-backend.com/service/api"
-   ```
-
-4. Run the frontend:
-   ```bash
-   pnpm dev
-   # or
-   npm run dev
-   ```
-
-The frontend will be available at `http://localhost:3000`
-
-## API Endpoints
-
-All endpoints are prefixed with `/service/api`:
-
-- `GET /service/api/datasets` - List datasets
-- `POST /service/api/datasets` - Create dataset
-- `GET /service/api/datasets/<id>` - Get dataset
-- `PUT /service/api/datasets/<id>` - Update dataset
-- `DELETE /service/api/datasets/<id>` - Delete dataset
-- `POST /service/api/upload` - Upload tensor files
-
-## Docker Compose
-
-### Quick Start
+From local agent to peer bridge:
 
 ```bash
-# 1. Setup (builds images, loads secrets, validates config)
-./scripts/setup.sh
-
-# 2. Check environment
-./scripts/check.sh
-
-# 3. Start services (manual start)
-./scripts/start.sh
-
-# Or use Makefile:
-make setup    # Initial setup
-make check    # Check environment
-make start    # Start services
-make stop     # Stop services
-make logs     # View logs
+curl -sS http://127.0.0.1:8080/send \
+  -H 'content-type: application/json' \
+  -d '{
+    "source_node": "bridge-alpha",
+    "dest_node": "bridge-beta",
+    "payload": {"message": "hello from alpha"}
+  }'
 ```
 
-### Manual Setup
+## Envelope Format
 
-```bash
-# Copy environment file
-cp env.example .env
-# Edit .env with your actual secrets
+All messages use JSON envelope schema:
 
-# Build images and prepare
-./scripts/setup.sh
-
-# Start services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+```json
+{
+  "source_node": "bridge-alpha",
+  "dest_node": "bridge-beta",
+  "payload": {"message": "hello"}
+}
 ```
 
-See [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed documentation.
+## Endpoints
 
-**Network Isolation**: Containers are isolated with no internet access except for database connections:
-- Frontend can only access Backend
-- Backend can only access MongoDB and Milvus
-- All database operations handled by Flask backend
+### Bridge Local Side
 
-## Kubernetes
+- `POST /send` on `BRIDGE_LOCAL_LISTEN` (default `127.0.0.1:8080`)
+- Called by local agent
+- Body is an Envelope JSON
 
-Deploy to Kubernetes using the Helm chart:
+### Bridge Peer Inbound Side
 
-```bash
-# Create namespace
-kubectl create namespace tensorstore
-
-# Create secrets (see KUBERNETES_SETUP.md)
-kubectl apply -f secrets.yaml
-
-# Deploy
-cd kubernetes/backend-chart
-helm install tensorstore . -n tensorstore -f values.yaml
-```
-
-See [KUBERNETES_SETUP.md](KUBERNETES_SETUP.md) for detailed documentation.
-
-**Network Policies**: Kubernetes Network Policies enforce the same isolation as Docker Compose.
+- `POST /inbound` on `<bridge-name>:BRIDGE_INBOUND_PORT` (default `8001`)
+- Called by another bridge over Tailnet
+- Extracts payload and forwards to `LOCAL_AGENT_URL`
 
 ## Environment Variables
 
-### Backend
+### Bridge
 
-- `MONGODB_URI` - MongoDB connection string
-- `MILVUS_URI` - Milvus instance URI
-- `MILVUS_TOKEN` - Milvus authentication token
-- `MILVUS_USER` - Milvus username (optional)
-
-### Frontend
-
-- `FLASK_API_URL` - Backend API URL (server-side)
-- `NEXT_PUBLIC_FLASK_API_URL` - Backend API URL (client-side)
+- `TS_AUTHKEY` - Tailscale authentication key
+- `BRIDGE_NAME` - Unique bridge identifier (e.g., `bridge-alpha`)
+- `TSNET_STATE_DIR` - Persistent directory for node identity
+- `BRIDGE_INBOUND_PORT` - Port for inbound peer connections (default: `8001`)
+- `PEER_BRIDGE_INBOUND_PORT` - Port for outbound peer connections (default: `8001`)
+- `BRIDGE_LOCAL_LISTEN` - Local agent endpoint (default: `127.0.0.1:8080`)
+- `LOCAL_AGENT_URL` - URL of local agent (e.g., `http://127.0.0.1:9090/api`)
 
 ## Development
 
-### Backend Development
+### Run Bridge
 
 ```bash
-cd db-flask-backend
-source venv/bin/activate
-python manage.py run
+cd tailscale-app
+go run ./bridge
 ```
 
-### Frontend Development
+### Configure ACLs
 
-```bash
-cd Kaggle-For-Tensors
-pnpm dev
+Use Tailscale ACLs to restrict which peer bridges can reach `/inbound`:
+
+```json
+{
+  "hosts": {
+    "bridge-alpha": "user:alice",
+    "bridge-beta": "user:bob"
+  },
+  "acls": [
+    {"action": "accept", "src": ["bridge-alpha"], "dst": ["bridge-beta:8001"]}
+  ]
+}
 ```
+
+See `docs/tailscale-acl.example.json` for full example.
 
 ## Notes
 
-- The backend does NOT use CORS - all requests come through the Next.js proxy
-- The frontend is strictly a proxy - no direct database connections
-- File uploads are temporarily stored in MongoDB (Milvus is for vectors)
+- Keep persistent `TSNET_STATE_DIR` to preserve node identity
+- Use distinct `BRIDGE_NAME` per host
+- Lock down communication with Tailscale ACLs before production
+- Payload limit is 1 MiB per message
+- Returns `502` if destination bridge is unreachable
+- Returns `400` for invalid envelope format
+
+## Documentation
+
+- Agent communication flow: `tailscale-app/docs/agent-communication.md`
+- Engineering notebook: `engineering-notebook/README.md`
 
 ## License
 
 MIT
-

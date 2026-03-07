@@ -24,9 +24,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/user', icon: Home },
-  { name: 'Browse Datasets', href: '/datasets', icon: Database },
-  { name: 'Upload', href: '/upload', icon: Upload },
-  { name: 'My Datasets', href: '/user/datasets', icon: FolderOpen },
+  { name: 'Bridges', href: '/bridges', icon: Database },
+  { name: 'Messages', href: '/messages', icon: Upload },
+  { name: 'My Bridges', href: '/user/bridges', icon: FolderOpen },
   { name: 'Analytics', href: '/user/analytics', icon: TrendingUp },
 ]
 
@@ -47,7 +47,7 @@ export function Sidebar() {
           <Link href="/" className="flex items-center gap-2">
             <Database className="w-6 h-6 text-cyber-blue" />
             <span className="font-bold bg-gradient-to-r from-cyber-blue to-cyber-purple bg-clip-text text-transparent">
-              TensorStore
+              Walkie-Talkie
             </span>
           </Link>
         )}

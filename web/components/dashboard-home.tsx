@@ -2,64 +2,41 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { 
-  Database, 
-  Upload, 
-  TrendingUp, 
-  Download, 
-  Eye, 
-  Plus, 
+import {
+  Network,
+  MessageSquare,
+  TrendingUp,
+  Download,
+  Upload,
+  Plus,
   ArrowRight,
-  Loader2,
-  Heart,
-  Users,
-  Star,
-  Award,
-  Calendar,
-  Mail,
-  User,
-  HelpCircle
+  Activity,
+  Server,
+  Shield
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
-interface Dataset {
+interface Bridge {
   id: string
   name: string
-  description: string
-  fileFormat: string
-  totalSize: number
-  downloadCount: number
-  viewCount: number
-  createdAt: string
-  tensors: Array<{
-    shape: string
-    dtype: string
-  }>
+  status: 'online' | 'offline'
+  lastSeen: string
+  messagesSent: number
+  messagesReceived: number
+  peerCount: number
 }
 
-interface ProfileStats {
-  totalDatasets: number
-  totalDownloads: number
-  totalViews: number
-  totalSize: number
-  avgDownloadsPerDataset: number
-  avgViewsPerDataset: number
-  engagementRate: number
-  mostPopularDataset: Dataset | null
-  totalUsersHelped: number
+interface BridgeStats {
+  totalBridges: number
+  onlineBridges: number
+  totalMessagesSent: number
+  totalMessagesReceived: number
+  avgMessagesPerBridge: number
+  mostActiveBridge: Bridge | null
 }
 
 export function DashboardHome() {
-  const isLoaded = true
-  const profile = {
-    fullName: 'Tensor Explorer',
-    username: 'explorer',
-    email: 'public@tensorstore.local',
-    createdAt: new Date().toISOString(),
-    imageUrl: '/placeholder-user.jpg',
-  }
-  const [datasets, setDatasets] = useState<Dataset[]>([])
-  const [stats, setStats] = useState<ProfileStats | null>(null)
+  const [bridges, setBridges] = useState<Bridge[]>([])
+  const [stats, setStats] = useState<BridgeStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -68,42 +45,49 @@ export function DashboardHome() {
 
   async function fetchDashboardData() {
     try {
-      const response = await fetch('/api/datasets')
-      const data = await response.json()
-      
-      const userDatasets = data.datasets || []
-      setDatasets(userDatasets)
+      // Mock data for now - replace with actual API call
+      const mockBridges: Bridge[] = [
+        {
+          id: '1',
+          name: 'bridge-alpha',
+          status: 'online',
+          lastSeen: new Date().toISOString(),
+          messagesSent: 42,
+          messagesReceived: 38,
+          peerCount: 3
+        },
+        {
+          id: '2',
+          name: 'bridge-beta',
+          status: 'online',
+          lastSeen: new Date().toISOString(),
+          messagesSent: 38,
+          messagesReceived: 42,
+          peerCount: 3
+        }
+      ]
 
-      const totalDatasets = data.total || 0
-      const totalDownloads = userDatasets.reduce((acc: number, d: any) => acc + d.downloadCount, 0)
-      const totalViews = userDatasets.reduce((acc: number, d: any) => acc + d.viewCount, 0)
-      const totalSize = userDatasets.reduce((acc: number, d: any) => acc + d.totalSize, 0)
-      
-      // Calculate engagement metrics
-      const avgDownloadsPerDataset = totalDatasets > 0 ? totalDownloads / totalDatasets : 0
-      const avgViewsPerDataset = totalDatasets > 0 ? totalViews / totalDatasets : 0
-      const engagementRate = totalViews > 0 ? (totalDownloads / totalViews) * 100 : 0
-      
-      // Find most popular dataset
-      const mostPopularDataset = userDatasets.length > 0
-        ? userDatasets.reduce((prev: Dataset, curr: Dataset) => 
-            (curr.downloadCount + curr.viewCount) > (prev.downloadCount + prev.viewCount) ? curr : prev
+      setBridges(mockBridges)
+
+      const totalBridges = mockBridges.length
+      const onlineBridges = mockBridges.filter(b => b.status === 'online').length
+      const totalMessagesSent = mockBridges.reduce((acc, b) => acc + b.messagesSent, 0)
+      const totalMessagesReceived = mockBridges.reduce((acc, b) => acc + b.messagesReceived, 0)
+      const avgMessagesPerBridge = totalBridges > 0 ? totalMessagesSent / totalBridges : 0
+
+      const mostActiveBridge = mockBridges.length > 0
+        ? mockBridges.reduce((prev, curr) =>
+            (curr.messagesSent + curr.messagesReceived) > (prev.messagesSent + prev.messagesReceived) ? curr : prev
           )
         : null
 
-      // Estimate users helped (unique downloads, approximated)
-      const totalUsersHelped = Math.max(totalDownloads, Math.floor(totalDownloads * 0.7))
-
       setStats({
-        totalDatasets,
-        totalDownloads,
-        totalViews,
-        totalSize,
-        avgDownloadsPerDataset,
-        avgViewsPerDataset,
-        engagementRate,
-        mostPopularDataset,
-        totalUsersHelped,
+        totalBridges,
+        onlineBridges,
+        totalMessagesSent,
+        totalMessagesReceived,
+        avgMessagesPerBridge,
+        mostActiveBridge
       })
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -112,299 +96,196 @@ export function DashboardHome() {
     }
   }
 
-  function formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B'
-    const k = 1024
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
-  }
-
-  function calculateHelpfulnessScore(dataset: Dataset): number {
-    // Helpfulness score based on downloads and views ratio
-    const engagement = dataset.downloadCount + dataset.viewCount
-    const conversionRate = dataset.viewCount > 0 ? (dataset.downloadCount / dataset.viewCount) * 100 : 0
-    return Math.min(100, (conversionRate * 0.6) + (engagement / 100) * 0.4)
-  }
-
-  if (!isLoaded || loading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-cyber-blue" />
+      <div className="flex items-center justify-center h-64">
+        <div className="text-cyber-light">Loading dashboard...</div>
       </div>
     )
   }
 
-  // Sort datasets by popularity (downloads + views)
-  const sortedDatasets = [...datasets].sort((a, b) => 
-    (b.downloadCount + b.viewCount) - (a.downloadCount + a.viewCount)
-  )
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark py-12 px-4">
-      <div className="container mx-auto max-w-7xl">
-        {/* Profile Header */}
-        <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-8 mb-8">
-          <div className="flex items-start gap-6">
-            <div className="relative">
-              <img
-                src={profile.imageUrl}
-                alt={profile.fullName}
-                className="w-24 h-24 rounded-full border-4 border-cyber-blue shadow-[0_0_20px_rgba(0,255,255,0.5)]"
-              />
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-cyber-green rounded-full border-2 border-black flex items-center justify-center">
-                <div className="w-3 h-3 bg-white rounded-full"></div>
-              </div>
-            </div>
+    <div className="space-y-8">
+      {/* Welcome */}
+      <div className="bg-gradient-to-r from-cyber-blue/10 to-cyber-purple/10 border border-cyber-blue/30 rounded-lg p-6">
+        <h1 className="text-3xl font-bold text-cyber-light mb-2">
+          Welcome to Walkie-Talkie for Bots
+        </h1>
+        <p className="text-cyber-light/70">
+          Peer-to-peer communication system for AI agents using Tailscale tsnet bridges
+        </p>
+      </div>
 
-            <div className="flex-1">
-              <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent">
-                {profile.fullName}
-              </h1>
-              <p className="text-lg text-cyber-light/70 mb-4">
-                Tensor Dataset Creator & Contributor
-              </p>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          icon={Network}
+          label="Total Bridges"
+          value={stats?.totalBridges || 0}
+          color="cyber-blue"
+        />
+        <StatCard
+          icon={Server}
+          label="Online Bridges"
+          value={stats?.onlineBridges || 0}
+          color="cyber-green"
+        />
+        <StatCard
+          icon={MessageSquare}
+          label="Messages Sent"
+          value={stats?.totalMessagesSent || 0}
+          color="cyber-pink"
+        />
+        <StatCard
+          icon={Download}
+          label="Messages Received"
+          value={stats?.totalMessagesReceived || 0}
+          color="cyber-purple"
+        />
+      </div>
 
-              <div className="flex flex-wrap gap-4 text-cyber-light/70 text-sm">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-cyber-blue" />
-                  <span>{profile.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-cyber-pink" />
-                  <span>@{profile.username}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-cyber-purple" />
-                  <span>Joined {new Date(profile.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <QuickActionCard
+          title="Deploy Bridge"
+          description="Start a new bridge node on your host"
+          icon={Plus}
+          href="/bridges/new"
+          color="cyber-blue"
+        />
+        <QuickActionCard
+          title="Send Message"
+          description="Send a message to another agent via bridge"
+          icon={MessageSquare}
+          href="/messages/send"
+          color="cyber-green"
+        />
+        <QuickActionCard
+          title="View Logs"
+          description="Monitor bridge activity and message logs"
+          icon={Activity}
+          href="/logs"
+          color="cyber-pink"
+        />
+      </div>
 
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={() => window.open(`mailto:${profile.email}`)}
-                variant="outline"
-                className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10"
-              >
-                Edit Profile
-              </Button>
-            </div>
-          </div>
+      {/* Bridge Status */}
+      <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-cyber-light">Your Bridges</h2>
+          <Link href="/bridges">
+            <Button variant="ghost" className="text-cyber-blue hover:text-cyber-blue">
+              View All <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
         </div>
 
-        {/* Impact Metrics */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-cyber-light mb-6 flex items-center gap-2">
-            <Award className="w-8 h-8 text-cyber-purple" />
-            Your Impact
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-br from-cyber-blue/20 to-cyber-purple/20 border border-cyber-blue/30 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <Users className="w-10 h-10 text-cyber-blue" />
-                <TrendingUp className="w-5 h-5 text-cyber-blue/50" />
-              </div>
-              <div className="text-4xl font-bold text-cyber-blue mb-1">
-                {stats?.totalUsersHelped || 0}
-              </div>
-              <div className="text-sm text-cyber-light/70">People Helped</div>
-              <div className="text-xs text-cyber-light/50 mt-2">
-                Through dataset downloads
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-cyber-pink/20 to-cyber-purple/20 border border-cyber-pink/30 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <Heart className="w-10 h-10 text-cyber-pink" />
-                <Star className="w-5 h-5 text-cyber-pink/50" />
-              </div>
-              <div className="text-4xl font-bold text-cyber-pink mb-1">
-                {stats?.totalDownloads || 0}
-              </div>
-              <div className="text-sm text-cyber-light/70">Dataset Likes</div>
-              <div className="text-xs text-cyber-light/50 mt-2">
-                Total downloads (engagement)
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-cyber-purple/20 to-cyber-blue/20 border border-cyber-purple/30 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <Eye className="w-10 h-10 text-cyber-purple" />
-                <TrendingUp className="w-5 h-5 text-cyber-purple/50" />
-              </div>
-              <div className="text-4xl font-bold text-cyber-purple mb-1">
-                {stats?.totalViews || 0}
-              </div>
-              <div className="text-sm text-cyber-light/70">Total Views</div>
-              <div className="text-xs text-cyber-light/50 mt-2">
-                People interested in your work
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-cyber-green/20 to-cyber-blue/20 border border-cyber-green/30 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <HelpCircle className="w-10 h-10 text-cyber-green" />
-                <Award className="w-5 h-5 text-cyber-green/50" />
-              </div>
-              <div className="text-4xl font-bold text-cyber-green mb-1">
-                {stats?.engagementRate ? Math.round(stats.engagementRate) : 0}%
-              </div>
-              <div className="text-sm text-cyber-light/70">Engagement Rate</div>
-              <div className="text-xs text-cyber-light/50 mt-2">
-                Downloads per view ratio
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Dataset Performance */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-cyber-light flex items-center gap-2">
-              <Database className="w-8 h-8 text-cyber-blue" />
-              Dataset Performance
-            </h2>
-            <Link href="/user/datasets">
-              <Button variant="outline" className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10">
-                View All
-                <ArrowRight className="w-4 h-4 ml-2" />
+        {bridges.length === 0 ? (
+          <div className="text-center py-12 text-cyber-light/60">
+            <h3 className="text-xl font-bold text-cyber-light mb-2">No bridges yet</h3>
+            <p className="mb-4">Deploy your first bridge to start peer-to-peer communication</p>
+            <Link href="/bridges/new">
+              <Button className="bg-gradient-to-r from-cyber-blue to-cyber-purple text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Deploy Bridge
               </Button>
             </Link>
           </div>
-
-          {sortedDatasets.length === 0 ? (
-            <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-12 text-center">
-              <Database className="w-16 h-16 mx-auto mb-4 text-cyber-light/30" />
-              <h3 className="text-xl font-bold text-cyber-light mb-2">No datasets yet</h3>
-              <p className="text-cyber-light/70 mb-6">
-                Upload your first tensor dataset to start helping others
-              </p>
-              <Link href="/upload">
-                <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Upload Dataset
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedDatasets.slice(0, 6).map((dataset) => {
-                const helpfulnessScore = calculateHelpfulnessScore(dataset)
-                const isPopular = dataset.downloadCount > 0 || dataset.viewCount > 10
-                
-                return (
-                  <Link key={dataset.id} href={`/datasets/${dataset.id}`}>
-                    <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-6 hover:border-cyber-pink transition-all hover:shadow-[0_0_20px_rgba(255,0,128,0.3)] cursor-pointer h-full relative">
-                      {isPopular && (
-                        <div className="absolute top-4 right-4">
-                          <div className="bg-cyber-pink/20 border border-cyber-pink rounded-full px-3 py-1 text-xs text-cyber-pink font-bold flex items-center gap-1">
-                            <Star className="w-3 h-3" />
-                            Popular
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-xl font-bold text-cyber-light flex-1 pr-2">{dataset.name}</h3>
-                        <span className="px-2 py-1 bg-cyber-blue/20 text-cyber-blue text-xs rounded font-mono">
-                          .{dataset.fileFormat}
-                        </span>
+        ) : (
+          <div className="space-y-4">
+            {bridges.map((bridge) => (
+              <Link key={bridge.id} href={`/bridges/${bridge.id}`}>
+                <div className="bg-black/50 border border-cyber-blue/30 rounded-lg p-4 hover:border-cyber-blue transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-3 h-3 rounded-full ${
+                        bridge.status === 'online' ? 'bg-cyber-green animate-pulse' : 'bg-cyber-pink'
+                      }`} />
+                      <div>
+                        <h3 className="text-lg font-bold text-cyber-light">{bridge.name}</h3>
+                        <p className="text-sm text-cyber-light/60">
+                          {bridge.peerCount} peers • {bridge.messagesSent} sent • {bridge.messagesReceived} received
+                        </p>
                       </div>
-
-                      <p className="text-cyber-light/70 text-sm mb-4 line-clamp-2">
-                        {dataset.description || 'No description provided'}
-                      </p>
-
-                      {/* Helpfulness Score */}
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between text-xs mb-2">
-                          <span className="text-cyber-light/50">Helpfulness Score</span>
-                          <span className="text-cyber-green font-bold">{Math.round(helpfulnessScore)}%</span>
-                        </div>
-                        <div className="w-full bg-cyber-dark rounded-full h-2">
-                          <div 
-                            className="bg-gradient-to-r from-cyber-green to-cyber-blue h-2 rounded-full transition-all"
-                            style={{ width: `${helpfulnessScore}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="flex items-center justify-between text-xs text-cyber-light/50 mb-2">
-                        <span>{formatBytes(dataset.totalSize)}</span>
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Heart className="w-3 h-3 text-cyber-pink" />
-                            {dataset.downloadCount} likes
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="w-3 h-3 text-cyber-purple" />
-                            {dataset.viewCount} views
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Impact indicator */}
-                      {dataset.downloadCount > 0 && (
-                        <div className="mt-3 pt-3 border-t border-cyber-blue/20">
-                          <div className="text-xs text-cyber-green flex items-center gap-1">
-                            <Users className="w-3 h-3" />
-                            Helping {dataset.downloadCount} {dataset.downloadCount === 1 ? 'person' : 'people'} with their work
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
+                    <div className="text-sm text-cyber-light/60">
+                      {bridge.status === 'online' ? 'Active' : 'Offline'}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link href="/upload">
-            <div className="bg-gradient-to-br from-cyber-pink/20 to-cyber-purple/20 border border-cyber-pink/30 rounded-lg p-6 hover:border-cyber-pink transition-all cursor-pointer group">
-              <div className="flex items-center justify-between mb-4">
-                <Upload className="w-8 h-8 text-cyber-pink" />
-                <ArrowRight className="w-5 h-5 text-cyber-pink/50 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <h3 className="text-xl font-bold text-cyber-light mb-2">Upload Dataset</h3>
-              <p className="text-cyber-light/70 text-sm">
-                Share your tensor datasets and help the community
-              </p>
-            </div>
+      {/* Documentation */}
+      <div className="bg-black/50 border border-cyber-purple/30 rounded-lg p-6">
+        <h3 className="text-xl font-bold text-cyber-light mb-2">Documentation</h3>
+        <p className="text-cyber-light/70 mb-4">
+          Learn how to set up and configure your bridge network
+        </p>
+        <div className="flex gap-4">
+          <Link href="/docs/quickstart">
+            <Button variant="outline" className="border-cyber-purple text-cyber-purple hover:bg-cyber-purple/10">
+              Quick Start Guide
+            </Button>
           </Link>
-
-          <Link href="/datasets">
-            <div className="bg-gradient-to-br from-cyber-blue/20 to-cyber-purple/20 border border-cyber-blue/30 rounded-lg p-6 hover:border-cyber-blue transition-all cursor-pointer group">
-              <div className="flex items-center justify-between mb-4">
-                <Database className="w-8 h-8 text-cyber-blue" />
-                <ArrowRight className="w-5 h-5 text-cyber-blue/50 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <h3 className="text-xl font-bold text-cyber-light mb-2">Browse Datasets</h3>
-              <p className="text-cyber-light/70 text-sm">
-                Discover tensor datasets from the community
-              </p>
-            </div>
+          <Link href="/docs/architecture">
+            <Button variant="outline" className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10">
+              Architecture
+            </Button>
           </Link>
-
-          <Link href="/user/analytics">
-            <div className="bg-gradient-to-br from-cyber-purple/20 to-cyber-pink/20 border border-cyber-purple/30 rounded-lg p-6 hover:border-cyber-purple transition-all cursor-pointer group">
-              <div className="flex items-center justify-between mb-4">
-                <TrendingUp className="w-8 h-8 text-cyber-purple" />
-                <ArrowRight className="w-5 h-5 text-cyber-purple/50 group-hover:translate-x-1 transition-transform" />
-              </div>
-              <h3 className="text-xl font-bold text-cyber-light mb-2">View Analytics</h3>
-              <p className="text-cyber-light/70 text-sm">
-                Track detailed performance metrics
-              </p>
-            </div>
+          <Link href="/docs/security">
+            <Button variant="outline" className="border-cyber-green text-cyber-green hover:bg-cyber-green/10">
+              <Shield className="w-4 h-4 mr-2" />
+              Security
+            </Button>
           </Link>
         </div>
       </div>
     </div>
+  )
+}
+
+function StatCard({ icon: Icon, label, value, color }: {
+  icon: any
+  label: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className={`bg-black/50 border border-${color}/30 rounded-lg p-6`}>
+      <div className="flex items-center justify-between mb-2">
+        <Icon className={`w-6 h-6 text-${color}`} />
+        <TrendingUp className={`w-4 h-4 text-${color}/60`} />
+      </div>
+      <div className={`text-3xl font-bold text-${color}`}>{value}</div>
+      <div className="text-sm text-cyber-light/70">{label}</div>
+    </div>
+  )
+}
+
+function QuickActionCard({
+  title,
+  description,
+  icon: Icon,
+  href,
+  color
+}: {
+  title: string
+  description: string
+  icon: any
+  href: string
+  color: string
+}) {
+  return (
+    <Link href={href}>
+      <div className={`bg-black/50 border border-${color}/30 rounded-lg p-6 hover:border-${color} transition-colors cursor-pointer`}>
+        <Icon className={`w-8 h-8 text-${color} mb-4`} />
+        <h3 className="text-lg font-bold text-cyber-light mb-2">{title}</h3>
+        <p className="text-sm text-cyber-light/70">{description}</p>
+      </div>
+    </Link>
   )
 }

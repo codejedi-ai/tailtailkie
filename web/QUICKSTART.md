@@ -1,111 +1,94 @@
 # Quick Start Guide
 
-Get TensorStore running in minutes with Docker Compose.
+Get Walkie-Talkie for Bots running in minutes.
 
 ## Prerequisites
 
-- Docker Desktop (or Docker Engine + Docker Compose)
-- At least 4GB RAM available
-- Ports 3000, 5000, 27017, 19530 available
+- Go 1.25+
+- Tailscale account with auth keys
+- Ports 8001, 8080 available
 
 ## Step 1: Clone and Setup
 
 ```bash
 # Navigate to project directory
-cd TensorStore
-
-# Run setup script (builds images, loads secrets)
-./scripts/setup.sh
+cd Kaggle-For-Tensors/tailscale-app
 ```
 
-The setup script will:
-- Create `.env` file from `env.example` if it doesn't exist
-- Validate required environment variables
-- Build Docker images for frontend and backend
-- Create necessary directories
-- Prepare Docker secrets
-
-**Important**: After setup, edit `.env` file with your actual secrets:
-- `MONGODB_ROOT_PASSWORD` - Strong password for MongoDB
-
-## Step 2: Check Environment
+## Step 2: Start Bridge on Host A
 
 ```bash
-# Verify everything is ready
-./scripts/check.sh
+TS_AUTHKEY=tskey-auth-bridge-a \
+BRIDGE_NAME=bridge-alpha \
+TSNET_STATE_DIR=./state/bridge-alpha \
+PEER_BRIDGE_INBOUND_PORT=8001 \
+LOCAL_AGENT_URL=http://127.0.0.1:9090/api \
+go run ./bridge
 ```
 
-This will check:
-- Environment variables are set
-- Docker is running
-- Images are built
-- Services status
-
-## Step 3: Start Services
+## Step 3: Start Bridge on Host B
 
 ```bash
-# Start all services
-./scripts/start.sh
+TS_AUTHKEY=tskey-auth-bridge-b \
+BRIDGE_NAME=bridge-beta \
+TSNET_STATE_DIR=./state/bridge-beta \
+PEER_BRIDGE_INBOUND_PORT=8001 \
+LOCAL_AGENT_URL=http://127.0.0.1:9090/api \
+go run ./bridge
 ```
 
-Or manually:
+## Step 4: Send Test Message
+
 ```bash
-docker-compose up -d
+curl -sS http://127.0.0.1:8080/send \
+  -H 'content-type: application/json' \
+  -d '{
+    "source_node": "bridge-alpha",
+    "dest_node": "bridge-beta",
+    "payload": {"message": "hello from alpha"}
+  }'
 ```
-
-## Step 4: Verify
-
-Open your browser:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000/service/api/status
 
 ## Common Commands
 
 ```bash
-# View logs
-docker-compose logs -f
+# Start bridge
+go run ./bridge
 
-# Stop services
-docker-compose down
-
-# Restart services
-docker-compose restart
-
-# View service status
-docker-compose ps
-
-# Or use Makefile
-make start    # Start services
-make stop     # Stop services
-make logs     # View logs
-make check    # Check status
+# Check bridge status
+curl http://127.0.0.1:8080/health
 ```
+
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `TS_AUTHKEY` | Tailscale auth key | `tskey-auth-xxx` |
+| `BRIDGE_NAME` | Unique bridge ID | `bridge-alpha` |
+| `TSNET_STATE_DIR` | Node identity storage | `./state/bridge-alpha` |
+| `BRIDGE_INBOUND_PORT` | Inbound peer port | `8001` |
+| `PEER_BRIDGE_INBOUND_PORT` | Outbound peer port | `8001` |
+| `BRIDGE_LOCAL_LISTEN` | Local agent endpoint | `127.0.0.1:8080` |
+| `LOCAL_AGENT_URL` | Agent URL | `http://127.0.0.1:9090/api` |
 
 ## Troubleshooting
 
-### Services won't start
-1. Check Docker is running: `docker info`
-2. Check ports are available: `lsof -i :3000 -i :5000`
-3. Check logs: `docker-compose logs`
+### Bridge won't start
+1. Check Tailscale auth key is valid
+2. Check ports are available: `lsof -i :8001 -i :8080`
+3. Check Go version: `go version` (need 1.25+)
 
-### Environment variables not loading
-1. Verify `.env` file exists
-2. Check variables are not using placeholder values
-3. Run `./scripts/check.sh` to validate
+### Can't reach peer bridge
+1. Verify both bridges are online on Tailnet
+2. Check `BRIDGE_NAME` is unique per host
+3. Verify Tailscale ACLs allow peer communication
 
-### Images not building
-1. Check Docker has enough resources (4GB+ RAM)
-2. Check internet connection (for pulling base images)
-3. Review build logs: `docker-compose build --no-cache`
-
-### Database connection errors
-1. Wait for MongoDB to be ready (can take 30-60 seconds)
-2. Check MongoDB logs: `docker-compose logs mongodb`
-3. Verify connection string in `.env`
+### Node identity lost
+1. Ensure `TSNET_STATE_DIR` persists between restarts
+2. Don't share state directories between bridges
 
 ## Next Steps
 
-- Read [DOCKER_SETUP.md](DOCKER_SETUP.md) for detailed documentation
-- Read [KUBERNETES_SETUP.md](KUBERNETES_SETUP.md) for Kubernetes deployment
-- Check [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for architecture details
-
+- Read `tailscale-app/docs/agent-communication.md` for message flow details
+- Configure Tailscale ACLs: `docs/tailscale-acl.example.json`
+- Review engineering notebook: `engineering-notebook/README.md`
