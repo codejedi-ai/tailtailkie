@@ -1,48 +1,24 @@
 /**
  * API Client for Flask backend
- * This replaces direct database connections with API calls to the Flask backend
+ * This replaces direct database connections with API calls to the Flask backend.
  */
 
 const FLASK_API_URL = process.env.NEXT_PUBLIC_FLASK_API_URL || 'http://localhost:5000/service/api'
 
 /**
- * Get the authorization token from Clerk
- */
-async function getAuthToken(): Promise<string | null> {
-  try {
-    // In Next.js, we can use the auth() function from Clerk
-    // For client-side calls, we need to get the token from the session
-    const response = await fetch('/api/auth/token')
-    if (response.ok) {
-      const data = await response.json()
-      return data.token
-    }
-  } catch (error) {
-    console.error('Error getting auth token:', error)
-  }
-  return null
-}
-
-/**
- * Make an authenticated API request to Flask backend
+ * Make an API request to Flask backend.
  */
 async function apiRequest(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = await getAuthToken()
-  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
   }
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-  
+
   const url = `${FLASK_API_URL}${endpoint}`
-  
+
   return fetch(url, {
     ...options,
     headers,
@@ -112,15 +88,9 @@ export const apiClient = {
       formData.append('files', file)
     })
     
-    const token = await getAuthToken()
-    const headers: HeadersInit = {}
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-    
+
     const response = await fetch(`${FLASK_API_URL}/upload`, {
       method: 'POST',
-      headers,
       body: formData,
     })
     

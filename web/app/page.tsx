@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useUser } from '@clerk/nextjs'
 import { Search, Upload, Database, TrendingUp, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -30,25 +28,13 @@ interface Dataset {
 }
 
 export default function HomePage() {
-  const { isSignedIn, user, isLoaded } = useUser()
-  const router = useRouter()
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.push('/user')
-    }
-  }, [isLoaded, isSignedIn, router])
-
-  useEffect(() => {
-    // Only fetch datasets if user is not signed in (for landing page)
-    if (isLoaded && !isSignedIn) {
-      fetchDatasets()
-    }
-  }, [isLoaded, isSignedIn])
+    fetchDatasets()
+  }, [])
 
   async function fetchDatasets(search?: string) {
     setLoading(true)
@@ -80,29 +66,6 @@ export default function HomePage() {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
   }
 
-  // Show loading state while checking auth
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-cyber-light/60">Loading...</div>
-        </div>
-      </div>
-    )
-  }
-
-  // If signed in, redirect will happen, but show loading during redirect
-  if (isSignedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-cyber-light/60">Redirecting to dashboard...</div>
-        </div>
-      </div>
-    )
-  }
-
-  // Landing page for non-authenticated users
   return (
     <div className="min-h-screen bg-gradient-to-b from-cyber-dark via-black to-cyber-dark">
       {/* Hero Section */}
@@ -129,20 +92,12 @@ export default function HomePage() {
             </p>
 
             <div className="flex gap-4 justify-center">
-              {isSignedIn ? (
-                <Link href="/upload">
-                  <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg">
-                    <Upload className="mr-2" />
-                    Upload Dataset
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/sign-up">
-                  <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg hover:animate-pulse">
-                    Get Started
-                  </Button>
-                </Link>
-              )}
+              <Link href="/upload">
+                <Button className="bg-gradient-to-r from-cyber-pink to-cyber-purple hover:from-cyber-purple hover:to-cyber-pink text-white font-bold py-6 px-8 text-lg hover:animate-pulse">
+                  <Upload className="mr-2" />
+                  Upload Dataset
+                </Button>
+              </Link>
               <Link href="/datasets">
                 <Button variant="outline" className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10 font-bold py-6 px-8 text-lg">
                   <Database className="mr-2" />

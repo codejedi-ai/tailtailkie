@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { Download, Eye, TrendingUp, Calendar, User, Database, Edit, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -48,7 +47,6 @@ interface Dataset {
 export default function DatasetDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, isSignedIn } = useUser()
   const [dataset, setDataset] = useState<Dataset | null>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
@@ -164,7 +162,7 @@ export default function DatasetDetailPage() {
     )
   }
 
-  const isOwner = isSignedIn && user?.emailAddresses[0]?.emailAddress === dataset.user.email
+  const isOwner = false
   const tags = dataset.tags ? JSON.parse(dataset.tags) : []
 
   return (

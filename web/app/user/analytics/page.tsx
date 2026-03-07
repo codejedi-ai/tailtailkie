@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
 import { TrendingUp, Download, Eye, Database, Calendar, Loader2 } from 'lucide-react'
 
 interface Analytics {
@@ -20,22 +18,16 @@ interface Analytics {
 }
 
 export default function AnalyticsPage() {
-  const { user, isLoaded, isSignedIn } = useUser()
-  const router = useRouter()
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push('/sign-in')
-    } else if (isSignedIn) {
-      fetchAnalytics()
-    }
-  }, [isLoaded, isSignedIn, router])
+    fetchAnalytics()
+  }, [])
 
   async function fetchAnalytics() {
     try {
-      const response = await fetch(`/api/datasets?userId=${user?.id}`)
+      const response = await fetch('/api/datasets')
       const data = await response.json()
 
       const datasets = data.datasets || []
@@ -56,16 +48,12 @@ export default function AnalyticsPage() {
     }
   }
 
-  if (!isLoaded || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-cyber-blue" />
       </div>
     )
-  }
-
-  if (!isSignedIn) {
-    return null
   }
 
   return (

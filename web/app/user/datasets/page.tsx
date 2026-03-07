@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Database, Download, TrendingUp, Edit, Trash2, Plus, Loader2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,22 +22,16 @@ interface Dataset {
 }
 
 export default function MyDatasetsPage() {
-  const { user, isLoaded, isSignedIn } = useUser()
-  const router = useRouter()
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push('/sign-in')
-    } else if (isSignedIn) {
-      fetchMyDatasets()
-    }
-  }, [isLoaded, isSignedIn, router])
+    fetchMyDatasets()
+  }, [])
 
   async function fetchMyDatasets() {
     try {
-      const response = await fetch(`/api/datasets?userId=${user?.id}`)
+      const response = await fetch('/api/datasets')
       const data = await response.json()
       setDatasets(data.datasets || [])
     } catch (error) {
@@ -78,16 +70,12 @@ export default function MyDatasetsPage() {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
   }
 
-  if (!isLoaded || loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-cyber-blue" />
       </div>
     )
-  }
-
-  if (!isSignedIn) {
-    return null
   }
 
   return (

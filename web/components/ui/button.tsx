@@ -1,60 +1,87 @@
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+import {
+  Button as ChakraButton,
+  type ButtonProps as ChakraButtonProps,
+} from "@chakra-ui/react"
 
-import { cn } from "@/lib/utils"
+type ButtonVariant =
+  | "default"
+  | "destructive"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "link"
+  | "gradient"
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        gradient:
-          "relative overflow-hidden bg-cyber-dark border border-cyber-blue/50 text-white hover:border-cyber-blue transition-colors",
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  },
-)
+type ButtonSize = "default" | "sm" | "lg" | "icon"
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean
+  extends Omit<ChakraButtonProps, "variant" | "size"> {
+  variant?: ButtonVariant
+  size?: ButtonSize
 }
 
+const chakraVariantMap: Record<ButtonVariant, ChakraButtonProps["variant"]> = {
+  default: "solid",
+  destructive: "solid",
+  outline: "outline",
+  secondary: "solid",
+  ghost: "ghost",
+  link: "link",
+  gradient: "solid",
+}
+
+const chakraColorMap: Record<ButtonVariant, ChakraButtonProps["colorScheme"]> = {
+  default: "teal",
+  destructive: "red",
+  outline: "teal",
+  secondary: "gray",
+  ghost: "gray",
+  link: "teal",
+  gradient: "teal",
+}
+
+const chakraSizeMap: Record<ButtonSize, ChakraButtonProps["size"]> = {
+  default: "md",
+  sm: "sm",
+  lg: "lg",
+  icon: "md",
+}
+
+const buttonVariants = ({
+  variant = "default",
+  size = "default",
+}: {
+  variant?: ButtonVariant
+  size?: ButtonSize
+}) => ({
+  variant: chakraVariantMap[variant],
+  colorScheme: chakraColorMap[variant],
+  size: chakraSizeMap[size],
+})
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  ({ variant = "default", size = "default", children, ...props }, ref) => {
+    const mapped = buttonVariants({ variant, size })
+    const gradientStyles =
+      variant === "gradient"
+        ? {
+            bgGradient: "linear(to-r, teal.500, cyan.400)",
+            color: "white",
+            _hover: {
+              bgGradient: "linear(to-r, teal.400, cyan.300)",
+            },
+          }
+        : undefined
 
-    // Add gradient effect for gradient variant
-    if (variant === "gradient") {
-      return (
-        <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props}>
-          <span className="relative z-10">{props.children}</span>
-          <span className="absolute inset-0 bg-gradient-to-r from-cyber-blue to-cyber-pink opacity-30 hover:opacity-50 transition-opacity"></span>
-        </Comp>
-      )
-    }
-
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    return (
+      <ChakraButton ref={ref} {...mapped} {...gradientStyles} {...props}>
+        {children}
+      </ChakraButton>
+    )
   },
 )
+
 Button.displayName = "Button"
 
 export { Button, buttonVariants }

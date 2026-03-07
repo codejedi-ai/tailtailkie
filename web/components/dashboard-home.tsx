@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser, useClerk } from '@clerk/nextjs'
 import Link from 'next/link'
 import { 
   Database, 
@@ -19,7 +18,6 @@ import {
   Calendar,
   Mail,
   User,
-  LogOut,
   HelpCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -52,21 +50,25 @@ interface ProfileStats {
 }
 
 export function DashboardHome() {
-  const { user, isLoaded } = useUser()
-  const { signOut } = useClerk()
+  const isLoaded = true
+  const profile = {
+    fullName: 'Tensor Explorer',
+    username: 'explorer',
+    email: 'public@tensorstore.local',
+    createdAt: new Date().toISOString(),
+    imageUrl: '/placeholder-user.jpg',
+  }
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [stats, setStats] = useState<ProfileStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isLoaded && user) {
-      fetchDashboardData()
-    }
-  }, [isLoaded, user])
+    fetchDashboardData()
+  }, [])
 
   async function fetchDashboardData() {
     try {
-      const response = await fetch(`/api/datasets?userId=${user?.id}`)
+      const response = await fetch('/api/datasets')
       const data = await response.json()
       
       const userDatasets = data.datasets || []
@@ -146,8 +148,8 @@ export function DashboardHome() {
           <div className="flex items-start gap-6">
             <div className="relative">
               <img
-                src={user?.imageUrl}
-                alt={user?.fullName || 'User'}
+                src={profile.imageUrl}
+                alt={profile.fullName}
                 className="w-24 h-24 rounded-full border-4 border-cyber-blue shadow-[0_0_20px_rgba(0,255,255,0.5)]"
               />
               <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-cyber-green rounded-full border-2 border-black flex items-center justify-center">
@@ -157,7 +159,7 @@ export function DashboardHome() {
 
             <div className="flex-1">
               <h1 className="text-4xl font-black mb-2 bg-gradient-to-r from-cyber-blue via-cyber-pink to-cyber-purple bg-clip-text text-transparent">
-                {user?.fullName || user?.username || 'Anonymous User'}
+                {profile.fullName}
               </h1>
               <p className="text-lg text-cyber-light/70 mb-4">
                 Tensor Dataset Creator & Contributor
@@ -166,34 +168,26 @@ export function DashboardHome() {
               <div className="flex flex-wrap gap-4 text-cyber-light/70 text-sm">
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-cyber-blue" />
-                  <span>{user?.primaryEmailAddress?.emailAddress}</span>
+                  <span>{profile.email}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-cyber-pink" />
-                  <span>@{user?.username || user?.id?.substring(0, 8)}</span>
+                  <span>@{profile.username}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-cyber-purple" />
-                  <span>Joined {new Date(user?.createdAt || '').toLocaleDateString()}</span>
+                  <span>Joined {new Date(profile.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
               <Button
-                onClick={() => window.open(user?.primaryEmailAddress?.emailAddress ? `mailto:${user.primaryEmailAddress.emailAddress}` : '#')}
+                onClick={() => window.open(`mailto:${profile.email}`)}
                 variant="outline"
                 className="border-cyber-blue text-cyber-blue hover:bg-cyber-blue/10"
               >
                 Edit Profile
-              </Button>
-              <Button
-                onClick={() => signOut({ redirectUrl: '/' })}
-                variant="outline"
-                className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
               </Button>
             </div>
           </div>

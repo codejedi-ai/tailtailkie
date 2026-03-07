@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
 import { Upload, X, Plus, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -35,7 +34,6 @@ const DTYPES = [
 
 export default function UploadPage() {
   const router = useRouter()
-  const { isSignedIn, isLoaded } = useUser()
 
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [datasetName, setDatasetName] = useState('')
@@ -47,11 +45,6 @@ export default function UploadPage() {
   const [tensorMetadata, setTensorMetadata] = useState<TensorMetadata[]>([])
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
-
-  if (isLoaded && !isSignedIn) {
-    router.push('/sign-in')
-    return null
-  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])

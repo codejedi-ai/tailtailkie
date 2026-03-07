@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
-import { ClerkProvider } from '@clerk/nextjs'
+import { ChakraAppProvider } from '@/components/chakra-provider'
 import { LayoutWrapper } from '@/components/LayoutWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -23,12 +23,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Get Clerk publishable key
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  
-  // If no key during build, render without ClerkProvider to avoid build errors
-  // The key should be set in Vercel environment variables
-  const content = (
+  return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <link
@@ -37,28 +32,19 @@ export default async function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
-        </ThemeProvider>
+        <ChakraAppProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </ThemeProvider>
+        </ChakraAppProvider>
       </body>
     </html>
-  )
-  
-  if (!publishableKey) {
-    // During build without key, render without ClerkProvider
-    return content
-  }
-  
-  return (
-    <ClerkProvider publishableKey={publishableKey}>
-      {content}
-    </ClerkProvider>
   )
 }
