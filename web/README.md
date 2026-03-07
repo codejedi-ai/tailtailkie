@@ -14,7 +14,6 @@ This is a monorepo containing:
 The Flask backend handles all database operations:
 - MongoDB for metadata storage
 - Milvus for vector storage and similarity search
-- Clerk authentication via JWT tokens
 
 **Important**: The backend does NOT use CORS. The frontend proxies all requests to the backend.
 
@@ -23,8 +22,6 @@ The Flask backend handles all database operations:
 The Next.js frontend is strictly a proxy layer:
 - All API routes (`/app/api/*`) forward requests to the Flask backend
 - No direct database connections
-- Uses Clerk for user authentication
-- Passes JWT tokens to backend for authorization
 
 ## Project Structure
 
@@ -74,7 +71,6 @@ TensorStore/
    export MONGODB_URI="mongodb://localhost:27017/tensorstore"
    export MILVUS_URI="https://your-instance.milvus.io"
    export MILVUS_TOKEN="your-token"
-   export CLERK_SECRET_KEY="sk_test_..."
    ```
 
 5. Run the backend:
@@ -204,8 +200,6 @@ See [KUBERNETES_SETUP.md](KUBERNETES_SETUP.md) for detailed documentation.
 - `MILVUS_URI` - Milvus instance URI
 - `MILVUS_TOKEN` - Milvus authentication token
 - `MILVUS_USER` - Milvus username (optional)
-- `CLERK_SECRET_KEY` - Clerk secret key for JWT verification
-- `CLERK_FRONTEND_API` - Clerk API URL (default: https://api.clerk.com)
 
 ### Frontend
 
@@ -233,7 +227,6 @@ pnpm dev
 
 - The backend does NOT use CORS - all requests come through the Next.js proxy
 - The frontend is strictly a proxy - no direct database connections
-- All authentication is handled via Clerk JWT tokens
 - File uploads are temporarily stored in MongoDB (Milvus is for vectors)
 
 ## License

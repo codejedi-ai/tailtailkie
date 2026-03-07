@@ -26,8 +26,6 @@ The setup script will:
 - Prepare Docker secrets
 
 **Important**: After setup, edit `.env` file with your actual secrets:
-- `CLERK_SECRET_KEY` - Your Clerk secret key
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
 - `MONGODB_ROOT_PASSWORD` - Strong password for MongoDB
 
 ## Step 2: Check Environment

@@ -15,9 +15,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Force dynamic rendering to avoid Clerk key issues during build
-export const dynamic = 'force-dynamic'
-
 export default async function RootLayout({
   children,
 }: {
