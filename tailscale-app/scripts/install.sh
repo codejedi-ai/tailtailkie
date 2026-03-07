@@ -22,12 +22,13 @@ echo -e "${GREEN}=== Walkie-Talkie Bridge Installer ===${NC}"
 echo
 
 # Ensure common binary directories are in PATH for non-interactive sudo shells.
-export PATH="$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="$PATH:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 # Returns 0 if a command exists in PATH or common absolute locations.
 has_cmd() {
     local cmd="$1"
     command -v "$cmd" >/dev/null 2>&1 \
+    || [ -x "/usr/local/go/bin/$cmd" ] \
         || [ -x "/usr/local/bin/$cmd" ] \
         || [ -x "/usr/bin/$cmd" ] \
         || [ -x "/bin/$cmd" ]
@@ -91,24 +92,48 @@ fi
 # Check if Go is installed
 if ! has_cmd go; then
     echo -e "${YELLOW}Go not found. Installing Go...${NC}"
-    
+
     # Download and install Go
     GO_VERSION="1.25.0"
     GO_TARBALL="go${GO_VERSION}.linux-${GOARCH}.tar.gz"
     GO_URL="https://go.dev/dl/${GO_TARBALL}"
-    
+
     cd /tmp
-    wget -q "$GO_URL" -O "$GO_TARBALL"
-    tar -C /usr/local -xzf "$GO_TARBALL"
-    rm "$GO_TARBALL"
     
-    # Add Go to PATH
-    if ! grep -q "export PATH=\$PATH:/usr/local/go/bin" /etc/profile; then
-        echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
+    # Try to download with timeout and progress (try wget first, then curl)
+    echo "Downloading Go $GO_VERSION..."
+    DOWNLOAD_OK=false
+    
+    if has_cmd wget; then
+        if wget --timeout=60 --tries=2 -q --show-progress "$GO_URL" -O "$GO_TARBALL"; then
+            DOWNLOAD_OK=true
+        fi
+    elif has_cmd curl; then
+        if curl --connect-timeout 60 --retry 2 -sS -L "$GO_URL" -o "$GO_TARBALL"; then
+            DOWNLOAD_OK=true
+        fi
     fi
     
-    export PATH=$PATH:/usr/local/go/bin
-    echo -e "${GREEN}✓ Go installed successfully${NC}"
+    if [ "$DOWNLOAD_OK" = true ] && [ -f "$GO_TARBALL" ]; then
+        echo "Extracting Go..."
+        tar -C /usr/local -xzf "$GO_TARBALL"
+        rm -f "$GO_TARBALL"
+
+        # Add Go to PATH
+        if ! grep -q "export PATH=\$PATH:/usr/local/go/bin" /etc/profile; then
+            echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
+        fi
+
+        export PATH=$PATH:/usr/local/go/bin
+        echo -e "${GREEN}✓ Go installed successfully${NC}"
+    else
+        echo -e "${RED}Error: Failed to download Go.${NC}"
+        echo "Please install Go manually:"
+        echo "  1. Download: $GO_URL"
+        echo "  2. Extract: sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-${GOARCH}.tar.gz"
+        echo "  3. Add to PATH: export PATH=\$PATH:/usr/local/go/bin"
+        exit 1
+    fi
 fi
 
 # Verify Go installation
