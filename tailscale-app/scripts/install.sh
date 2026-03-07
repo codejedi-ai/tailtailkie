@@ -112,7 +112,7 @@ if [ -f "$BIN_DIR/walkie-talkie-bridge" ]; then
 fi
 
 # Clone or update repository
-if [ -d "$INSTALL_DIR/tailtailkie" ]; then
+if [ -d "$INSTALL_DIR/tailtailkie/.git" ]; then
     echo -e "${YELLOW}Updating repository...${NC}"
     cd "$INSTALL_DIR/tailtailkie"
     git fetch --quiet
@@ -122,6 +122,8 @@ else
     cd /tmp
     rm -rf tailtailkie  # Clean up any failed previous attempts
     git clone "$REPO_URL" --quiet
+    # Remove old/broken installation if it exists
+    rm -rf "$INSTALL_DIR"
     mv tailtailkie "$INSTALL_DIR"
 fi
 
