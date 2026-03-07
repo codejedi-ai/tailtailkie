@@ -104,13 +104,14 @@ echo -e "${YELLOW}Creating installation directory...${NC}"
 mkdir -p "$INSTALL_DIR"
 
 # Clone or update repository
-if [ -d "$INSTALL_DIR/tailscale-app" ]; then
+if [ -d "$INSTALL_DIR/tailtailkie" ]; then
     echo -e "${YELLOW}Updating existing installation...${NC}"
     cd "$INSTALL_DIR/tailtailkie"
     git pull --quiet
 else
     echo -e "${YELLOW}Cloning repository...${NC}"
     cd /tmp
+    rm -rf tailtailkie  # Clean up any failed previous attempts
     git clone --depth 1 "$REPO_URL" --quiet
     mv tailtailkie "$INSTALL_DIR"
 fi
@@ -176,12 +177,15 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     echo
     echo -e "${YELLOW}=== Initial Configuration Required ===${NC}"
     echo
-    echo "Run the following command to configure your bridge:"
+    echo "1. Configure your bridge:"
     echo -e "${GREEN}  sudo walkie-talkie-bridge init${NC}"
     echo
-    echo "Or manually create $CONFIG_DIR/config.json"
+    echo "   You'll be prompted for:"
+    echo "   - Tailscale Auth Key (from https://login.tailscale.com/admin/settings/keys)"
+    echo "   - Bridge Name (unique identifier, e.g., bridge-alpha)"
+    echo "   - Local Agent URL (your agent's API endpoint)"
     echo
-    echo "After configuration, start the service:"
+    echo "2. Start the service:"
     echo -e "${GREEN}  sudo systemctl start $SYSTEMD_SERVICE${NC}"
 else
     echo -e "${GREEN}✓ Configuration found${NC}"
@@ -194,13 +198,43 @@ fi
 echo
 echo -e "${GREEN}=== Installation Complete ===${NC}"
 echo
-echo "Useful commands:"
-echo "  sudo systemctl status $SYSTEMD_SERVICE  # Check service status"
-echo "  sudo systemctl stop $SYSTEMD_SERVICE    # Stop service"
-echo "  sudo systemctl restart $SYSTEMD_SERVICE # Restart service"
-echo "  journalctl -u $SYSTEMD_SERVICE -f       # View logs"
-echo "  walkie-talkie-bridge help               # Show CLI help"
+echo -e "${YELLOW}Quick Start Guide:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
-echo "Configuration: $CONFIG_DIR/config.json"
-echo "Logs: journalctl -u $SYSTEMD_SERVICE"
+echo "1. Initialize (first time only):"
+echo -e "   ${GREEN}sudo walkie-talkie-bridge init${NC}"
+echo
+echo "2. Start the service:"
+echo -e "   ${GREEN}sudo systemctl start $SYSTEMD_SERVICE${NC}"
+echo
+echo "3. Check status:"
+echo -e "   ${GREEN}sudo systemctl status $SYSTEMD_SERVICE${NC}"
+echo
+echo -e "${YELLOW}CLI Commands:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  walkie-talkie-bridge init    # Interactive configuration"
+echo "  walkie-talkie-bridge run     # Start bridge (foreground)"
+echo "  walkie-talkie-bridge help    # Show help message"
+echo
+echo -e "${YELLOW}Service Management:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  sudo systemctl start $SYSTEMD_SERVICE    # Start service"
+echo "  sudo systemctl stop $SYSTEMD_SERVICE     # Stop service"
+echo "  sudo systemctl restart $SYSTEMD_SERVICE  # Restart service"
+echo "  sudo systemctl status $SYSTEMD_SERVICE   # Check status"
+echo "  journalctl -u $SYSTEMD_SERVICE -f        # View logs (follow)"
+echo "  journalctl -u $SYSTEMD_SERVICE --since today  # Today's logs"
+echo
+echo -e "${YELLOW}Configuration:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Config file: $CONFIG_DIR/config.json"
+echo "  State directory: ~/.tailtalkie/state/"
+echo
+echo -e "${YELLOW}Discover Agents:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  curl http://localhost:8001/agents  # List all agents on tailnet"
+echo
+echo -e "${YELLOW}Uninstall:${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  curl -fsSL https://raw.githubusercontent.com/codejedi-ai/tailtailkie/main/tailscale-app/scripts/uninstall.sh | sudo bash"
 echo
