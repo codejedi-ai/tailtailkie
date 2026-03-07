@@ -14,6 +14,7 @@ NC='\033[0m' # No Color
 # Configuration
 REPO_URL="https://github.com/codejedi-ai/tailtailkie.git"
 INSTALL_DIR="/opt/walkie-talkie"
+LEGACY_REPO_DIR="$INSTALL_DIR/tailtailkie"
 SYSTEMD_SERVICE="walkie-talkie-bridge.service"
 CONFIG_DIR="$HOME/.tailtalkie"
 BIN_DIR="/usr/local/bin"
@@ -158,24 +159,36 @@ if [ -f "$BIN_DIR/walkie-talkie-bridge" ]; then
 fi
 
 # Clone or update repository
-if [ -d "$INSTALL_DIR/tailtailkie/.git" ]; then
+# Support both legacy layout (/opt/walkie-talkie/tailtailkie)
+# and normalized layout (/opt/walkie-talkie as git root).
+REPO_DIR=""
+if [ -d "$INSTALL_DIR/.git" ]; then
+    REPO_DIR="$INSTALL_DIR"
+elif [ -d "$LEGACY_REPO_DIR/.git" ]; then
+    REPO_DIR="$LEGACY_REPO_DIR"
+fi
+
+if [ -n "$REPO_DIR" ]; then
     echo -e "${YELLOW}Updating repository...${NC}"
-    cd "$INSTALL_DIR/tailtailkie"
+    cd "$REPO_DIR"
     git fetch --quiet
     git reset --hard origin/main --quiet
 else
     echo -e "${YELLOW}Cloning repository...${NC}"
-    cd /tmp
-    rm -rf tailtailkie  # Clean up any failed previous attempts
-    git clone "$REPO_URL" --quiet
-    # Remove old/broken installation if it exists
+    # Remove old/broken installation if it exists and clone fresh.
     rm -rf "$INSTALL_DIR"
-    mv tailtailkie "$INSTALL_DIR"
+    git clone "$REPO_URL" "$INSTALL_DIR" --quiet
+    REPO_DIR="$INSTALL_DIR"
+fi
+
+# If we updated from legacy layout, keep building from that location.
+if [ -z "$REPO_DIR" ]; then
+    REPO_DIR="$INSTALL_DIR"
 fi
 
 # Build the bridge
 echo -e "${YELLOW}Building bridge...${NC}"
-cd "$INSTALL_DIR/tailscale-app"
+cd "$REPO_DIR/tailscale-app"
 go build -o "$BIN_DIR/walkie-talkie-bridge" ./bridge
 
 if [ ! -f "$BIN_DIR/walkie-talkie-bridge" ]; then
