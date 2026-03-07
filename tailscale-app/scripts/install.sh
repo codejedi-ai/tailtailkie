@@ -21,6 +21,18 @@ BIN_DIR="/usr/local/bin"
 echo -e "${GREEN}=== Walkie-Talkie Bridge Installer ===${NC}"
 echo
 
+# Ensure common binary directories are in PATH for non-interactive sudo shells.
+export PATH="$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Returns 0 if a command exists in PATH or common absolute locations.
+has_cmd() {
+    local cmd="$1"
+    command -v "$cmd" >/dev/null 2>&1 \
+        || [ -x "/usr/local/bin/$cmd" ] \
+        || [ -x "/usr/bin/$cmd" ] \
+        || [ -x "/bin/$cmd" ]
+}
+
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then 
     echo -e "${RED}Error: This script must be run as root (use sudo)${NC}"
@@ -48,23 +60,28 @@ esac
 echo -e "${YELLOW}Detected architecture: $ARCH ($GOARCH)${NC}"
 
 # Check if git is installed
-if ! command -v git &> /dev/null; then
+if ! has_cmd git; then
     echo -e "${YELLOW}Git not found. Installing git...${NC}"
     
     # Detect package manager
-    if command -v apt-get &> /dev/null; then
+    if has_cmd apt-get; then
         apt-get update -qq
         apt-get install -y -qq git
-    elif command -v yum &> /dev/null; then
+    elif has_cmd yum; then
         yum install -y -q git
-    elif command -v dnf &> /dev/null; then
+    elif has_cmd dnf; then
         dnf install -y -q git
-    elif command -v apk &> /dev/null; then
+    elif has_cmd apk; then
         apk add --no-cache git
-    elif command -v zypper &> /dev/null; then
+    elif has_cmd zypper; then
         zypper install -y git
     else
         echo -e "${RED}Error: Could not detect package manager. Please install git manually.${NC}"
+        exit 1
+    fi
+
+    if ! has_cmd git; then
+        echo -e "${RED}Error: Git installation did not make 'git' available on PATH.${NC}"
         exit 1
     fi
     
@@ -72,7 +89,7 @@ if ! command -v git &> /dev/null; then
 fi
 
 # Check if Go is installed
-if ! command -v go &> /dev/null; then
+if ! has_cmd go; then
     echo -e "${YELLOW}Go not found. Installing Go...${NC}"
     
     # Download and install Go
@@ -96,6 +113,10 @@ fi
 
 # Verify Go installation
 export PATH=$PATH:/usr/local/go/bin
+if ! has_cmd go; then
+    echo -e "${RED}Error: Go is still not available after installation.${NC}"
+    exit 1
+fi
 GO_VERSION=$(go version | awk '{print $3}')
 echo -e "${GREEN}✓ Found $GO_VERSION${NC}"
 
