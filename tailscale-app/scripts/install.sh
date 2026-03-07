@@ -82,13 +82,13 @@ mkdir -p "$INSTALL_DIR"
 # Clone or update repository
 if [ -d "$INSTALL_DIR/tailscale-app" ]; then
     echo -e "${YELLOW}Updating existing installation...${NC}"
-    cd "$INSTALL_DIR/Kaggle-For-Tensors"
+    cd "$INSTALL_DIR/tailtailkie"
     git pull --quiet
 else
     echo -e "${YELLOW}Cloning repository...${NC}"
     cd /tmp
     git clone --depth 1 "$REPO_URL" --quiet
-    mv Kaggle-For-Tensors "$INSTALL_DIR"
+    mv tailtailkie "$INSTALL_DIR"
 fi
 
 # Build the bridge
