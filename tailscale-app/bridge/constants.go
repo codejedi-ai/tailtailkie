@@ -4,7 +4,6 @@ import "errors"
 
 const (
 	defaultBridgeName  = "bridge-alpha"
-	defaultStateDir    = "./state/bridge-alpha"
 	defaultLocalAgent  = "http://127.0.0.1:9090/api"
 	defaultPeerInPort  = 8001
 	defaultInboundPort = 8001

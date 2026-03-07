@@ -10,7 +10,10 @@ import (
 )
 
 func runBridge() {
-	cfg := loadConfig()
+	cfg, err := loadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
 
 	srv := &tsnet.Server{
 		Hostname: cfg.BridgeName,

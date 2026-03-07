@@ -69,35 +69,68 @@ This guide covers everything you need to set up peer-to-peer agent-to-agent comm
 - Allow outbound connections on all ports (Tailscale handles encryption)
 - No inbound ports need to be opened (Tailscale uses NAT traversal)
 
-## 5. Environment Setup
+## 5. Configuration Setup
 
-### Required Environment Variables
+### First-Time Setup (Interactive)
 
-```bash
-# Tailscale Authentication
-TS_AUTHKEY=tskey-auth-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+The bridge stores configuration in `~/.tailtalkie/config.json`.
 
-# Bridge Identity (unique per host)
-BRIDGE_NAME=bridge-alpha
-
-# State Directory (persistent storage)
-TSNET_STATE_DIR=./state/bridge-alpha
-
-# Bridge Ports
-BRIDGE_INBOUND_PORT=8001
-PEER_BRIDGE_INBOUND_PORT=8001
-BRIDGE_LOCAL_LISTEN=127.0.0.1:8080
-
-# Local Agent URL (your agent's API endpoint)
-LOCAL_AGENT_URL=http://127.0.0.1:9090/api
-```
-
-### Optional Environment Variables
+Run the interactive setup:
 
 ```bash
-# HMAC Secret for envelope authentication (shared among trusted bridges)
-BRIDGE_HMAC_SECRET=your-shared-secret-here
+cd tailscale-app
+go run ./bridge init
 ```
+
+You'll be prompted for:
+1. **Tailscale Auth Key** - From your admin console
+2. **Bridge Name** - Unique identifier (e.g., `bridge-alpha`)
+3. **Local Agent URL** - Your agent's HTTP endpoint
+4. **Inbound Port** - Default: 8001
+5. **Local Listen Address** - Default: 127.0.0.1:8080
+
+### Manual Configuration
+
+Alternatively, create the config file manually:
+
+```bash
+mkdir -p ~/.tailtalkie
+cat > ~/.tailtalkie/config.json <<EOF
+{
+  "bridge_name": "bridge-alpha",
+  "auth_key": "tskey-auth-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "local_agent_url": "http://127.0.0.1:9090/api",
+  "inbound_port": 8001,
+  "peer_inbound_port": 8001,
+  "local_listen": "127.0.0.1:8080",
+  "state_dir": "/home/username/.tailtalkie/state"
+}
+EOF
+```
+
+### Config File Location
+
+- **Path**: `~/.tailtalkie/config.json`
+- **Permissions**: 0600 (owner read/write only)
+- **Auto-created**: By `bridge init` command
+
+### Config Schema
+
+```json
+{
+  "bridge_name": "string (required, unique per bridge)",
+  "state_dir": "string (optional, auto-generated)",
+  "auth_key": "string (required)",
+  "local_agent_url": "string (optional, default: http://127.0.0.1:9090/api)",
+  "peer_inbound_port": "integer (optional, default: 8001)",
+  "inbound_port": "integer (optional, default: 8001)",
+  "local_listen": "string (optional, default: 127.0.0.1:8080)"
+}
+```
+
+### No Environment Variables
+
+The bridge does **not** use environment variables for configuration. All settings are loaded from `~/.tailtalkie/config.json`.
 
 ## 6. Local Agent Requirements
 
@@ -165,43 +198,54 @@ go mod download
 go build -o bridge ./bridge
 ```
 
-### Create State Directory
+### Initialize Configuration
 ```bash
-mkdir -p state/bridge-alpha
-mkdir -p state/bridge-beta
+# Interactive setup (creates ~/.tailtalkie/config.json)
+go run ./bridge init
+
+# Or manually create config (see section 5)
 ```
 
-### Copy Environment File
+### Verify Setup
 ```bash
-cp .env .env.local
-# Edit .env.local with your actual values
+# Check config exists
+cat ~/.tailtalkie/config.json
+
+# Start the bridge
+go run ./bridge
 ```
 
 ## 9. Running Multiple Bridges
 
-Each bridge needs:
-- Unique `BRIDGE_NAME`
-- Unique `TSNET_STATE_DIR`
-- Same `TS_AUTHKEY` (or different keys per bridge)
+Each bridge needs a unique `bridge_name` in its config.
 
-Example for two bridges on same host (testing):
+### Option 1: Multiple Config Files
+
 ```bash
-# Bridge Alpha
-TS_AUTHKEY=tskey-xxx \
-BRIDGE_NAME=bridge-alpha \
-TSNET_STATE_DIR=./state/bridge-alpha \
-BRIDGE_LOCAL_LISTEN=127.0.0.1:8080 \
-LOCAL_AGENT_URL=http://127.0.0.1:9090/api \
-go run ./bridge
+# Create config for bridge-alpha
+cat > ~/.tailtalkie/config-alpha.json <<EOF
+{
+  "bridge_name": "bridge-alpha",
+  "auth_key": "tskey-xxx",
+  "inbound_port": 8001,
+  "local_listen": "127.0.0.1:8080"
+}
+EOF
 
-# Bridge Beta (different terminal)
-TS_AUTHKEY=tskey-xxx \
-BRIDGE_NAME=bridge-beta \
-TSNET_STATE_DIR=./state/bridge-beta \
-BRIDGE_LOCAL_LISTEN=127.0.0.1:8081 \
-LOCAL_AGENT_URL=http://127.0.0.1:9091/api \
-go run ./bridge
+# Create config for bridge-beta
+cat > ~/.tailtalkie/config-beta.json <<EOF
+{
+  "bridge_name": "bridge-beta",
+  "auth_key": "tskey-xxx",
+  "inbound_port": 8002,
+  "local_listen": "127.0.0.1:8081"
+}
+EOF
 ```
+
+### Option 2: Edit Config Between Runs
+
+Edit `~/.tailtalkie/config.json` to change `bridge_name` and ports before each run.
 
 ## 10. Security Considerations
 
@@ -234,26 +278,42 @@ go version  # Must be 1.25+
 lsof -i :8001
 lsof -i :8080
 
+# Check config file
+cat ~/.tailtalkie/config.json
+
 # Check state directory permissions
-ls -la ./state/
+ls -la ~/.tailtalkie/
+```
+
+### Config File Not Found
+```bash
+# Run interactive setup
+go run ./bridge init
+
+# Or verify config exists
+ls -la ~/.tailtalkie/config.json
 ```
 
 ### Can't Connect to Peer
 ```bash
 # Verify both bridges are online
-tailscale status  # If tailscale CLI is installed
+# Check bridge logs for "Listening on" messages
 
-# Check bridge logs for errors
-# Look for "Listening on" messages
-
-# Verify BRIDGE_NAME is unique
-echo $BRIDGE_NAME
+# Verify bridge names are unique in config
+cat ~/.tailtalkie/config.json | grep bridge_name
 ```
 
 ### Auth Key Issues
 - Ensure key is not expired
 - Check key has not been revoked
 - Verify key has correct permissions (ephemeral vs. regular)
+
+### Reset Configuration
+```bash
+# Remove config and re-run init
+rm ~/.tailtalkie/config.json
+go run ./bridge init
+```
 
 ## 12. Next Steps
 
