@@ -1,8 +1,8 @@
 # Binaries
-tsa2a/bridge/bridge
+bridge/bridge
 
 # State and logs
-tsa2a/state/
+state/
 tsa2a-state/
 .tailtalkie/
 
