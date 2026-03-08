@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -19,6 +20,7 @@ type AgentInfo struct {
 	Hostname  string    `json:"hostname"`
 	IP        string    `json:"ip"`
 	Online    bool      `json:"online"`
+	Verified  bool      `json:"verified"`
 	LastSeen  time.Time `json:"last_seen"`
 	Gateways  []GatewayInfo `json:"gateways"`
 }
@@ -133,11 +135,16 @@ func (d *DiscoveryService) discoverOnce() {
 		agent.Online = true
 		agent.LastSeen = time.Now()
 
-		// Scan for open gateway ports
-		agent.Gateways = d.scanGateways(ctx, agent.IP)
+		// Perform handshake to verify if this is an A2A agent
+		agent.Verified = d.verifyAgent(ctx, agent.IP)
 
-		log.Printf("[discovery] found agent: %s (%s) - %d gateways", 
-			name, agent.IP, len(agent.Gateways))
+		// Scan for open gateway ports (only if verified or for debugging)
+		if agent.Verified {
+			agent.Gateways = d.scanGateways(ctx, agent.IP)
+		}
+
+		log.Printf("[discovery] found agent: %s (%s) - verified: %v, %d gateways", 
+			name, agent.IP, agent.Verified, len(agent.Gateways))
 	}
 
 	// Remove stale agents (offline for > 5 minutes)
@@ -147,6 +154,40 @@ func (d *DiscoveryService) discoverOnce() {
 			log.Printf("[discovery] removed stale agent: %s", name)
 		}
 	}
+}
+
+func (d *DiscoveryService) verifyAgent(ctx context.Context, ip string) bool {
+	// Handshake: call /.tsa2a/identity on the peer
+	// Try port 80 (standard) and potentially other known ports
+	client := d.srv.HTTPClient()
+	
+	verifyCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	url := fmt.Sprintf("http://%s/.tsa2a/identity", ip)
+	req, err := http.NewRequestWithContext(verifyCtx, "GET", url, nil)
+	if err != nil {
+		return false
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false
+	}
+
+	var identity struct {
+		Type string `json:"type"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&identity); err != nil {
+		return false
+	}
+
+	return identity.Type == "tailscale-a2a-agent"
 }
 
 func (d *DiscoveryService) scanGateways(ctx context.Context, ip string) []GatewayInfo {
@@ -205,6 +246,20 @@ func (d *DiscoveryService) GetOnlineAgents() []AgentInfo {
 	result := make([]AgentInfo, 0)
 	for _, agent := range d.agents {
 		if agent.Online {
+			result = append(result, *agent)
+		}
+	}
+	return result
+}
+
+// GetOnlineVerifiedAgents returns only online and verified agents
+func (d *DiscoveryService) GetOnlineVerifiedAgents() []AgentInfo {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
+	result := make([]AgentInfo, 0)
+	for _, agent := range d.agents {
+		if agent.Online && agent.Verified {
 			result = append(result, *agent)
 		}
 	}

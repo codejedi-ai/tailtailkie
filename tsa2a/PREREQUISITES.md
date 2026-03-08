@@ -61,49 +61,46 @@ This guide covers everything you need to set up peer-to-peer agent-to-agent comm
 ### Ports
 | Port | Purpose | Direction |
 |------|---------|-----------|
-| 8001 | Bridge inbound (Tailnet) | Bridge-to-Bridge |
-| 8080 | Local agent endpoint | Localhost only |
-| 9090 | Agent API (example) | Localhost only |
+| 80   | Bridge inbound (Tailnet) | Bridge-to-Bridge |
+| 8080 | Local egress endpoint | Localhost only |
+| 8000 | Agent API (example) | Localhost only |
 
 ### Firewall Rules
-- Allow outbound connections on all ports (Tailscale handles encryption)
-- No inbound ports need to be opened (Tailscale uses NAT traversal)
+- Allow outbound connections on all ports (Tailscale handles encryption).
+- No inbound ports need to be opened (Tailscale uses NAT traversal).
 
 ## 5. Configuration Setup
 
-### First-Time Setup (Interactive)
+### First-Time Setup
 
-The bridge stores configuration in `~/.tailtalkie/config.json`.
+The bridge stores configuration in `~/.tailtalkie/config.json`. 
 
-Run the interactive setup:
-
+You can run the interactive setup:
 ```bash
-cd tailscale-app
-go run ./bridge init
+cd tsa2a/bridge
+go run . init
 ```
 
-You'll be prompted for:
-1. **Tailscale Auth Key** - From your admin console
-2. **Bridge Name** - Unique identifier (e.g., `bridge-alpha`)
-3. **Local Agent URL** - Your agent's HTTP endpoint
-4. **Inbound Port** - Default: 8001
-5. **Local Listen Address** - Default: 127.0.0.1:8080
+Or set the `TS_AUTHKEY` environment variable and run:
+```bash
+go run . run
+```
 
 ### Manual Configuration
 
-Alternatively, create the config file manually:
+Create the config file manually:
 
 ```bash
-mkdir -p ~/.tailtalkie
+mkdir -p ~/.tailtalkie/state
 cat > ~/.tailtalkie/config.json <<EOF
 {
-  "bridge_name": "bridge-alpha",
-  "auth_key": "tskey-auth-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "local_agent_url": "http://127.0.0.1:9090/api",
-  "inbound_port": 8001,
-  "peer_inbound_port": 8001,
+  "bridge_name": "nanobot-gateway",
+  "auth_key": "",
+  "local_agent_url": "http://127.0.0.1:8000",
+  "inbound_port": 80,
+  "peer_inbound_port": 80,
   "local_listen": "127.0.0.1:8080",
-  "state_dir": "/home/username/.tailtalkie/state"
+  "state_dir": "/Users/USERNAME/.tailtalkie/state"
 }
 EOF
 ```

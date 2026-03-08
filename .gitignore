@@ -1,0 +1,10 @@
+# Binaries
+tsa2a/bridge/bridge
+
+# State and logs
+tsa2a/state/
+tsa2a-state/
+.tailtalkie/
+
+# OS files
+.DS_Store

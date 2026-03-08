@@ -6,7 +6,7 @@
     {
       "action": "accept",
       "src": ["tag:bridge"],
-      "dst": ["tag:bridge:8001"]
+      "dst": ["tag:bridge:80"]
     }
   ],
   "ssh": []

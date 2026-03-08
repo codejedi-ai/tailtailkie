@@ -27,13 +27,13 @@ type BridgeConfig struct {
 func DefaultConfig() BridgeConfig {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		homeDir = "~"
+		homeDir = "."
 	}
 
 	return BridgeConfig{
 		BridgeName:      defaultBridgeName,
 		StateDir:        filepath.Join(homeDir, configDirName, "state"),
-		AuthKey:         "",
+		AuthKey:         os.Getenv("TS_AUTHKEY"),
 		LocalAgentURL:   defaultLocalAgent,
 		PeerInboundPort: defaultPeerInPort,
 		InboundPort:     defaultInboundPort,
@@ -66,9 +66,14 @@ func loadConfig() (BridgeConfig, error) {
 		return cfg, fmt.Errorf("failed to parse config JSON: %w", err)
 	}
 
+	// Fallback to environment variable if empty in config
+	if cfg.AuthKey == "" {
+		cfg.AuthKey = os.Getenv("TS_AUTHKEY")
+	}
+
 	// Validate required fields
 	if cfg.AuthKey == "" {
-		return cfg, fmt.Errorf("auth_key is required in config")
+		return cfg, fmt.Errorf("auth_key is required (set TS_AUTHKEY env var or auth_key in config.json)")
 	}
 	if cfg.BridgeName == "" {
 		return cfg, fmt.Errorf("bridge_name is required in config")

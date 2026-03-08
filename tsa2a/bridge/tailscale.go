@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"fmt"
 
 	"tailscale.com/tsnet"
 )
@@ -38,6 +39,7 @@ func logSelfTailscaleIPs(srv *tsnet.Server) {
 			for _, ip := range st.Self.TailscaleIPs {
 				ips = append(ips, ip.String())
 			}
+			fmt.Printf("✅ Tailscale IP(s): %s\n", strings.Join(ips, ", "))
 			log.Printf("bridge tailnet IP(s): %s", strings.Join(ips, ", "))
 			return
 		}
