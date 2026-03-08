@@ -11,7 +11,7 @@ The bridge acts as a **transparent reverse proxy**. It sits on the Tailnet and f
 1.  A remote agent calls your bridge name: `http://nanobot-gateway/chat`.
 2.  The bridge receives the request and identifies the sender via Tailscale.
 3.  The bridge injects identity headers: `X-A2A-Sender` and `X-A2A-Node`.
-4.  The bridge forwards the request to your local agent at `http://127.0.0.1:8000/chat`.
+4.  The bridge forwards the request to your local agent at `http://127.0.0.1:18789/chat`.
 5.  Your agent responds, and the bridge passes the response back to the requester.
 
 ### Outbound Flow (Agent -> Mesh)

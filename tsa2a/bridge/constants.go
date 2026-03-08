@@ -4,7 +4,7 @@ import "errors"
 
 const (
 	defaultBridgeName  = "nanobot-gateway"
-	defaultLocalAgent  = "http://127.0.0.1:8000"
+	defaultLocalAgent  = "http://127.0.0.1:18789"
 	defaultPeerInPort  = 80
 	defaultInboundPort = 80
 	defaultLocalListen = "127.0.0.1:8080"

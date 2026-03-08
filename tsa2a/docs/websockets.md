@@ -7,7 +7,7 @@ The bridge supports full bidirectional WebSockets for real-time agent communicat
 If a remote agent wants to open a WebSocket to you:
 
 1.  They connect to `ws://your-bridge-name/`.
-2.  The bridge upgrades the connection and transparently pipes it to your local agent at `ws://127.0.0.1:8000/`.
+2.  The bridge upgrades the connection and transparently pipes it to your local agent at `ws://127.0.0.1:18789/`.
 3.  All WebSocket frames are forwarded bit-for-bit.
 
 ## Outbound WebSockets (Calling other Agents)
@@ -20,4 +20,4 @@ If your local agent wants to open a WebSocket to another agent on the mesh:
 
 ## Configuration
 
-Make sure your local agent is listening for WebSocket connections on the port specified in `local_agent_url` (default is 8000).
+Make sure your local agent is listening for WebSocket connections on the port specified in `local_agent_url` (default is 18789).

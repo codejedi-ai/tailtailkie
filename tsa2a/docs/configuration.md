@@ -12,7 +12,7 @@ The bridge looks for its configuration at: `~/.tailtalkie/config.json`.
 {
   "bridge_name": "nanobot-gateway",
   "auth_key": "tskey-auth-...",
-  "local_agent_url": "http://127.0.0.1:8000",
+  "local_agent_url": "http://127.0.0.1:18789",
   "inbound_port": 80,
   "peer_inbound_port": 80,
   "local_listen": "127.0.0.1:8080",
