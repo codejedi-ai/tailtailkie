@@ -1,219 +1,56 @@
-# tsnet Peer-to-Peer Bridges
+# Tailscale A2A Bridge
 
-This folder contains a peer-to-peer implementation that embeds Tailscale directly into Go applications using `tsnet`.
+This repository contains a Tailscale Agent-to-Agent (A2A) bridge that embeds Tailscale directly into your applications using `tsnet`.
 
-- No `tailscaled` service required.
-- No host Tailscale app required.
-- Each binary is its own Tailnet node.
-- Configuration stored in `~/.tailtalkie/config.json`
-- Auto-discovers agents and gateways on your tailnet
+## Core Features
 
-## Quick Install (Linux)
-
-One-line installation:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/codejedi-ai/tailtailkie/main/tailscale-app/scripts/install.sh | sudo bash
-```
-
-This will:
-- Install Go (if not present)
-- Build and install the bridge
-- Create systemd service
-- Set up configuration directory
-
-After installation:
-```bash
-# Configure your bridge
-sudo walkie-talkie-bridge init
-
-# Start the service
-sudo systemctl start walkie-talkie-bridge
-
-# View status
-sudo systemctl status walkie-talkie-bridge
-```
-
-## Prerequisites
-
-Before running bridges, complete the setup in **PREREQUISITES.md**:
-
-- Go 1.25+
-- Tailscale account with auth keys
-- Local agent with HTTP endpoint
-- Ports 8001, 8080 available
-
-See [PREREQUISITES.md](PREREQUISITES.md) for detailed setup instructions.
-
-## Components
-
-- `bridge`: per-host peer bridge node
-- `protocol/envelope.go`: JSON envelope schema
-
-## Envelope format
-
-```json
-{
-  "source_node": "bridge-alpha",
-  "dest_node": "bridge-beta",
-  "payload": {"type": "task", "message": "hello"}
-}
-```
+- **Transparent Proxy**: Forwards all Tailnet traffic to your local agent (port 18789 by default).
+- **Identity Injection**: Automatically adds `X-A2A-Sender` and `X-A2A-Node` headers to inbound requests.
+- **Robust Discovery**: Automatic peer detection with an identity-based handshake.
+- **WebSocket Support**: Seamless bidirectional streaming for both inbound and outbound connections.
+- **Egress Proxy**: Allows your local agent to call other mesh agents via a local helper (`127.0.0.1:8080`).
 
 ## Quick Start
 
-### 1) Initialize Configuration
+### 1. Configure the Bridge
 
-Run the interactive setup:
-
-```bash
-cd tailscale-app
-go run ./bridge init
-```
-
-This will:
-- Create `~/.tailtalkie/` directory
-- Prompt for your Tailscale auth key
-- Prompt for bridge name and agent URL
-- Save configuration to `~/.tailtalkie/config.json`
-
-### 2) Start the Bridge
+Set your Tailscale Auth Key and run the initialization:
 
 ```bash
-go run ./bridge
+cd bridge
+go run . init
 ```
 
-Or explicitly:
+Alternatively, export your key and run directly (it will use defaults):
 
 ```bash
-go run ./bridge run
+export TS_AUTHKEY=tskey-auth-...
+go run . run
 ```
 
-### 3) Send a Message
+### 2. Verify Connection
 
-```bash
-curl -sS http://127.0.0.1:8080/send \
-  -H 'content-type: application/json' \
-  -d '{
-    "source_node": "bridge-alpha",
-    "dest_node": "bridge-beta",
-    "payload": {"message": "hello from alpha"}
-  }'
+Once running, the bridge will print its connectivity status:
+```text
+🚀 tsa2a Bridge Online!
+External (Tailnet): http://nanobot-gateway/
+Internal Forward:   http://127.0.0.1:18789
+Discovery:         http://nanobot-gateway/tsa2a/discovery
+✅ Tailscale IP(s): 100.x.y.z
 ```
 
-## Configuration
+## Documentation
 
-### Config File Location
+- **[PREREQUISITES.md](PREREQUISITES.md)**: Detailed setup and system requirements.
+- **[Agent Communication](docs/agent-communication.md)**: How the transparent proxy and identity headers work.
+- **[Discovery Handshake](docs/discovery.md)**: Details on the secure peer discovery mechanism.
+- **[WebSocket Support](docs/websockets.md)**: Using WebSockets for real-time communication.
+- **[Configuration Reference](docs/configuration.md)**: Detailed `config.json` and environment variable guide.
 
-`~/.tailtalkie/config.json`
+## Repository Structure
 
-### Config Schema
-
-```json
-{
-  "bridge_name": "bridge-alpha",
-  "state_dir": "/home/user/.tailtalkie/state",
-  "auth_key": "tskey-auth-xxxxx",
-  "local_agent_url": "http://127.0.0.1:9090/api",
-  "peer_inbound_port": 8001,
-  "inbound_port": 8001,
-  "local_listen": "127.0.0.1:8080"
-}
-```
-
-### Fields
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `bridge_name` | ✅ | Unique identifier for this bridge |
-| `auth_key` | ✅ | Tailscale authentication key |
-| `state_dir` | ❌ | Directory for Tailscale state (auto-generated) |
-| `local_agent_url` | ❌ | Your local agent's HTTP endpoint |
-| `inbound_port` | ❌ | Port for inbound Tailnet connections |
-| `peer_inbound_port` | ❌ | Port for outbound peer connections |
-| `local_listen` | ❌ | Local endpoint for agent communication |
-
-### Manual Configuration
-
-You can also create the config file manually:
-
-```bash
-mkdir -p ~/.tailtalkie
-cat > ~/.tailtalkie/config.json <<EOF
-{
-  "bridge_name": "bridge-alpha",
-  "auth_key": "tskey-auth-your-key-here",
-  "local_agent_url": "http://127.0.0.1:9090/api",
-  "inbound_port": 8001,
-  "local_listen": "127.0.0.1:8080"
-}
-EOF
-```
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `bridge init` | Interactive configuration setup |
-| `bridge run` | Start the bridge (default) |
-| `bridge help` | Show help message |
-
-## Agent Discovery
-
-The bridge automatically discovers agents and gateways on your tailnet.
-
-### Discover Agents
-
-```bash
-# Query the agents endpoint on any bridge
-curl http://<bridge-host>:8001/agents
-```
-
-Response:
-```json
-{
-  "agents": [
-    {
-      "name": "bridge-alpha",
-      "hostname": "bridge-alpha.tailnet.ts.net",
-      "ip": "100.64.0.1",
-      "online": true,
-      "last_seen": "2026-03-07T12:00:00Z",
-      "gateways": [
-        {"port": 8001, "protocol": "tcp", "service": "bridge-inbound"},
-        {"port": 8080, "protocol": "tcp", "service": "bridge-local"},
-        {"port": 9090, "protocol": "tcp", "service": "agent-api"}
-      ]
-    }
-  ],
-  "count": 1
-}
-```
-
-### Discovery Features
-
-- **Auto-detection**: Scans tailnet every 30 seconds
-- **Gateway scanning**: Detects open ports on each agent
-- **Health monitoring**: Tracks online/offline status
-- **Stale cleanup**: Removes agents offline > 5 minutes
-
-## Notes
-
-- The bridge local endpoint is `POST /send` on `local_listen` (default `127.0.0.1:8080`).
-- The bridge tailnet endpoint is `POST /inbound` on `inbound_port` (default `8001`).
-- Outbound routing is direct bridge-to-bridge using `dest_node` and `peer_inbound_port`.
-- State directory persists node identity between restarts.
-- Lock down communication with Tailscale ACLs and tags before production use.
-
-## Multiple Bridges
-
-To run multiple bridges on the same machine (for testing):
-
-1. Run `bridge init` with different `bridge_name` values
-2. Edit `~/.tailtalkie/config.json` to change ports if needed
-3. Start each bridge with a different config directory
-
-## Docs
-
-- Setup guide: [PREREQUISITES.md](PREREQUISITES.md)
-- Agent communication: [docs/agent-communication.md](docs/agent-communication.md)
+- `bridge/`: The Go implementation of the A2A bridge.
+- `docs/`: Technical documentation and architecture guides.
+- `protocol/`: Shared protocol definitions.
+- `scripts/`: Installation and utility scripts.
+- `state/`: Persistent Tailscale identity state (ignored by git).
