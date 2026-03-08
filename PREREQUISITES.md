@@ -77,7 +77,7 @@ The bridge stores configuration in `~/.tailtalkie/config.json`.
 
 You can run the interactive setup:
 ```bash
-cd tsa2a/bridge
+cd bridge
 go run . init
 ```
 
@@ -178,7 +178,7 @@ Before running bridges, verify:
 - [ ] Go 1.25+ installed: `go version`
 - [ ] Tailscale account created
 - [ ] Auth key generated (ephemeral recommended)
-- [ ] Ports 8001, 8080, 9090 available
+- [ ] Ports 80, 8080, 18789 available
 - [ ] Local agent running and accessible
 - [ ] State directory exists or can be created
 
@@ -186,7 +186,7 @@ Before running bridges, verify:
 
 ### Clone and Build
 ```bash
-cd tailscale-app
+cd tailtailkie  # Repo root
 
 # Download dependencies
 go mod download
@@ -209,7 +209,8 @@ go run ./bridge init
 cat ~/.tailtalkie/config.json
 
 # Start the bridge
-go run ./bridge
+cd bridge
+go run . run
 ```
 
 ## 9. Running Multiple Bridges
